@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Pedidos de Compra - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <button class="btn btn-secondary me-2 toggle-filters">
+        <i class="fas fa-filter me-1"></i>Filtros
+    </button>
+    <button class="btn btn-primary me-2 generate-pdf" data-report-type="purchase_orders" data-title="Relatório de Pedidos de Compra">
+        <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Form -->
+<div class="card mb-4 filter-container {% if not start_date and not end_date and status == 'all' %}d-none{% endif %}">
+    <div class="card-body">
+        <form id="date-filter-form" method="GET" action="{{ url_for('purchase_orders_report') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Data Final</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-6">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% for status_option in statuses %}
+                    <option value="{{ status_option.value }}" {% if status == status_option.value %}selected{% endif %}>
+                        {{ status_option.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="reset" class="btn btn-secondary me-2">Limpar</button>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Purchase Orders Summary -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Resumo dos Pedidos</h5>
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Período: 
+                    <strong>
+                        {% if start_date %}{{ start_date }}{% else %}Início{% endif %}
+                        a 
+                        {% if end_date %}{{ end_date }}{% else %}Hoje{% endif %}
+                    </strong>
+                    <br>
+                    <i class="fas fa-filter me-2"></i>
+                    Status: 
+                    <strong>
+                        {{ {'all': 'Todos', 'draft': 'Rascunho', 'sent': 'Enviado', 'received': 'Recebido', 'cancelled': 'Cancelado'}[status] }}
+                    </strong>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h3>R$ {{ "%.2f"|format(total_pending_value) }}</h3>
+                                <p class="mb-0">Pendentes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ purchase_orders|selectattr('status', 'equalto', 'draft')|list|length }}</h3>
+                                <p class="mb-0">Rascunho</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ purchase_orders|selectattr('status', 'equalto', 'sent')|list|length }}</h3>
+                                <p class="mb-0">Enviados</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ purchase_orders|selectattr('status', 'equalto', 'received')|list|length }}</h3>
+                                <p class="mb-0">Recebidos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>R$ {{ "%.2f"|format(total_received_value) }}</h3>
+                                <p class="mb-0">Valor Total dos Pedidos Recebidos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Pedidos por Status</h5>
+                <div class="chart-container">
+                    <canvas id="po-status-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Lista de Pedidos</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if purchase_orders %}
+        <div class="table-responsive">
+            <table class="table table-hover report-table-purchase_orders mb-0">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Fornecedor</th>
+                        <th>Status</th>
+                        <th>Data de Criação</th>
+                        <th>Data de Envio</th>
+                        <th>Data de Recebimento</th>
+                        <th>Itens</th>
+                        <th>Valor Total</th>
+                        <th>Progresso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for po in purchase_orders %}
+                    <tr>
+                        <td><a href="{{ url_for('purchase_order_detail', po_id=po.id) }}">{{ po.po_number }}</a></td>
+                        <td>{{ po.supplier }}</td>
+                        <td>
+                            <span class="po-status-{{ po.status }}">
+                                {{ {'draft': 'Rascunho', 'sent': 'Enviado', 'received': 'Recebido', 'cancelled': 'Cancelado'}[po.status] }}
+                            </span>
+                        </td>
+                        <td>{{ po.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ po.sent_at.strftime('%d/%m/%Y') if po.sent_at else '-' }}</td>
+                        <td>{{ po.received_at.strftime('%d/%m/%Y') if po.received_at else '-' }}</td>
+                        <td>{{ po.items|length }}</td>
+                        <td>R$ {{ "%.2f"|format(po.get_total_value()) }}</td>
+                        <td>
+                            {% set total_qty = po.items|sum(attribute='quantity') %}
+                            {% set received_qty = po.items|sum(attribute='received_quantity') %}
+                            {% set progress = (received_qty / total_qty * 100)|round if total_qty > 0 else 0 %}
+                            
+                            <div class="progress">
+                                <div class="progress-bar {% if progress == 100 %}bg-success{% elif progress > 0 %}bg-warning{% else %}bg-secondary{% endif %}"
+                                     role="progressbar" style="width: {{ progress }}%"
+                                     aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ progress }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
+            <p class="text-muted">Nenhum pedido de compra encontrado com os filtros selecionados.</p>
+            <button class="btn btn-secondary toggle-filters">
+                <i class="fas fa-filter me-1"></i>Ajustar Filtros
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Purchase Order Status Chart
+        const ctx = document.getElementById('po-status-chart').getContext('2d');
+        
+        // Count POs by status
+        let draftCount = 0;
+        let sentCount = 0;
+        let receivedCount = 0;
+        let cancelledCount = 0;
+        
+        {% for po in purchase_orders %}
+            {% if po.status == 'draft' %}
+                draftCount++;
+            {% elif po.status == 'sent' %}
+                sentCount++;
+            {% elif po.status == 'received' %}
+                receivedCount++;
+            {% elif po.status == 'cancelled' %}
+                cancelledCount++;
+            {% endif %}
+        {% endfor %}
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Rascunho', 'Enviado', 'Recebido', 'Cancelado'],
+                datasets: [{
+                    data: [draftCount, sentCount, receivedCount, cancelledCount],
+                    backgroundColor: ['#6C757D', '#007BFF', '#28A745', '#DC3545']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+        
+        // Form reset - handle the redirect
+        document.querySelector('form button[type="reset"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '{{ url_for("purchase_orders_report") }}';
+        });
+    });
+</script>
+{% endblock %}

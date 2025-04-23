@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Usuários - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <a href="{{ url_for('register') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-1"></i>Novo Usuário
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nome de Usuário</th>
+                        <th>Email</th>
+                        <th>Perfil</th>
+                        <th>Cadastrado em</th>
+                        <th>Último Acesso</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="badge bg-{% if user.role == 'admin' %}primary{% else %}secondary{% endif %}">
+                                {{ 'Administrador' if user.role == 'admin' else 'Usuário' }}
+                            </span>
+                        </td>
+                        <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if user.last_login %}
+                                {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                Nunca
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.id != current_user.id %}
+                            <a href="{{ url_for('toggle_role', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                                {% if user.role == 'admin' %}
+                                    <i class="fas fa-user me-1"></i>Tornar Usuário
+                                {% else %}
+                                    <i class="fas fa-user-shield me-1"></i>Tornar Admin
+                                {% endif %}
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary">Usuário Atual</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info m-3">
+            Nenhum usuário encontrado.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Tipos de Perfil</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        Administrador
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li>Acesso total ao sistema</li>
+                            <li>Gerenciamento de usuários</li>
+                            <li>Configurações do sistema</li>
+                            <li>Todas as funcionalidades de usuário</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">
+                        Usuário
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li>Acesso ao dashboard</li>
+                            <li>Gerenciamento de estoque</li>
+                            <li>Registro de movimentações</li>
+                            <li>Gerenciamento de projetos</li>
+                            <li>Visualização de relatórios</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

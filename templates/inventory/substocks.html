@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Sub-Estoques - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <a href="{{ url_for('new_substock') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Novo Sub-Estoque
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for data in substock_data %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ data.substock.name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong><i class="fas fa-map-marker-alt me-2"></i>Localização:</strong>
+                    <p>{{ data.substock.location or 'Não especificada' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong><i class="fas fa-info-circle me-2"></i>Descrição:</strong>
+                    <p>{{ data.substock.description or 'Sem descrição' }}</p>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h3 class="mb-0">{{ data.item_count }}</h3>
+                            <small class="text-muted">Diferentes Itens</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="mb-0">{{ data.total_items }}</h3>
+                        <small class="text-muted">Total de Registros</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <span class="text-muted">
+                    <small>Criado em: {{ data.substock.created_at.strftime('%d/%m/%Y') }}</small>
+                </span>
+                <div>
+                    <a href="{{ url_for('substock_detail', substock_id=data.substock.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye me-1"></i>Detalhes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>Nenhum sub-estoque cadastrado.
+        </div>
+        <div class="text-center">
+            <a href="{{ url_for('new_substock') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Adicionar Primeiro Sub-Estoque
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card mt-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Sobre Sub-Estoques</h5>
+    </div>
+    <div class="card-body">
+        <p>Sub-estoques são locais físicos onde os itens são armazenados. Eles podem representar:</p>
+        <ul>
+            <li>Diferentes setores da empresa</li>
+            <li>Filiais ou lojas</li>
+            <li>Áreas de armazenamento</li>
+            <li>Locais dentro da fábrica ou escritório</li>
+        </ul>
+        <p>Cada item pode estar em vários sub-estoques em quantidades diferentes, e as movimentações ocorrem entre eles.</p>
+    </div>
+</div>
+{% endblock %}

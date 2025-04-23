@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Movimentações de Estoque - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <a href="{{ url_for('new_movement') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Nova Movimentação
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Movement Type Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Filtrar por Tipo:</h5>
+            <select class="form-select w-auto" id="movement-type-filter">
+                <option value="{{ url_for('movements', type='all') }}" {% if type_filter == 'all' %}selected{% endif %}>
+                    Todos os Tipos
+                </option>
+                {% for type in movement_types %}
+                <option value="{{ url_for('movements', type=type.id) }}" {% if type_filter|string == type.id|string %}selected{% endif %}>
+                    {{ type.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Movements Table -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if movements %}
+        <div class="table-responsive">
+            <table class="table table-hover movement-table mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Data</th>
+                        <th>Item</th>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                        <th>Origem</th>
+                        <th>Destino</th>
+                        <th>Projeto</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movement in movements %}
+                    <tr>
+                        <td>{{ movement.id }}</td>
+                        <td>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td><a href="{{ url_for('item_detail', item_id=movement.item.id) }}">{{ movement.item.name }}</a></td>
+                        <td>
+                            <span class="
+                                {% if 'entrada' in movement.movement_type.name.lower() %}movement-entry
+                                {% elif 'saída' in movement.movement_type.name.lower() %}movement-exit
+                                {% elif 'transfer' in movement.movement_type.name.lower() %}movement-transfer
+                                {% elif 'recicl' in movement.movement_type.name.lower() %}movement-recycle
+                                {% elif 'perda' in movement.movement_type.name.lower() %}movement-loss
+                                {% endif %}
+                            ">
+                                {{ movement.movement_type.name }}
+                            </span>
+                        </td>
+                        <td>{{ movement.quantity }} {{ movement.item.unit.symbol }}</td>
+                        <td>
+                            {% if movement.source_substock %}
+                            <a href="{{ url_for('substock_detail', substock_id=movement.source_substock.id) }}">
+                                {{ movement.source_substock.name }}
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if movement.destination_substock %}
+                            <a href="{{ url_for('substock_detail', substock_id=movement.destination_substock.id) }}">
+                                {{ movement.destination_substock.name }}
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if movement.project %}
+                            <a href="{{ url_for('project_detail', project_id=movement.project.id) }}">
+                                {{ movement.project.name }}
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('movement_detail', movement_id=movement.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-exchange-alt fa-3x mb-3 text-muted"></i>
+            <p class="text-muted">Nenhuma movimentação encontrada.</p>
+            <a href="{{ url_for('new_movement') }}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-1"></i>Registrar Movimentação
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Movement Types Info Card -->
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Tipos de Movimentação</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="movement-entry"><i class="fas fa-arrow-right me-2"></i>Entrada</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Adição de itens ao estoque, como recebimento de mercadorias ou retorno de itens.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="movement-exit"><i class="fas fa-arrow-left me-2"></i>Saída</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Retirada de itens do estoque, como consumo em projetos ou vendas.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="movement-transfer"><i class="fas fa-exchange-alt me-2"></i>Transferência</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Movimentação de itens entre sub-estoques diferentes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="movement-recycle"><i class="fas fa-recycle me-2"></i>Reciclagem</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Reutilização de materiais, como filamentos reprocessados.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span class="movement-loss"><i class="fas fa-trash-alt me-2"></i>Perda</span>
+                    </div>
+                    <div class="card-body">
+                        <p>Baixa por perda, descarte ou dano de materiais no estoque.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre - Estoque3D{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Sobre o Estoque3D</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Autores Principais</h2>
+            
+            <div class="row">
+                <!-- Autor Principal -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Wellington Castro DevTon</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Desenvolvedor Principal</h6>
+                            <p class="card-text">
+                                <strong>Contribuições:</strong>
+                                <ul>
+                                    <li>Arquitetura do sistema</li>
+                                    <li>Desenvolvimento do backend</li>
+                                    <li>Gerenciamento de banco de dados</li>
+                                    <li>Documentação técnica</li>
+                                </ul>
+                            </p>
+                            <a href="https://github.com/seu-usuario" class="card-link" target="_blank">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colaborador -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Nome do Colaborador</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Desenvolvedor Frontend</h6>
+                            <p class="card-text">
+                                <strong>Contribuições:</strong>
+                                <ul>
+                                    <li>Interface do usuário</li>
+                                    <li>Componentes React</li>
+                                    <li>Estilização CSS</li>
+                                    <li>Documentação de usuário</li>
+                                </ul>
+                            </p>
+                            <a href="https://github.com/colaborador" class="card-link" target="_blank">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Contribuidores</h2>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Nome do Contribuidor 1</h5>
+                            <p class="card-text">Implementação do sistema de relatórios</p>
+                            <a href="https://github.com/contribuidor1" class="card-link" target="_blank">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Nome do Contribuidor 2</h5>
+                            <p class="card-text">Melhorias na API REST</p>
+                            <a href="https://github.com/contribuidor2" class="card-link" target="_blank">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Como Contribuir</h2>
+            <p>Se você deseja contribuir com o projeto, siga estas etapas:</p>
+            <ol>
+                <li>Fork o repositório</li>
+                <li>Crie uma branch para sua feature (<code>git checkout -b feature/nova-feature</code>)</li>
+                <li>Commit suas mudanças (<code>git commit -m 'Adiciona nova feature'</code>)</li>
+                <li>Push para a branch (<code>git push origin feature/nova-feature</code>)</li>
+                <li>Abra um Pull Request</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Contato</h2>
+            <p>Para questões relacionadas ao desenvolvimento, entre em contato:</p>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-envelope"></i> Email: dev@estoque3d.com</li>
+                <li><i class="fab fa-github"></i> Issues: <a href="https://github.com/seu-usuario/estoque3d/issues" target="_blank">GitHub Issues</a></li>
+                <li><i class="fab fa-discord"></i> Discord: <a href="https://discord.gg/seu-servidor" target="_blank">Servidor do Projeto</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,343 @@
+<!-- <li class="nav-item"> -->
+    <!-- <a class="nav-link {% if request.endpoint == 'brands' %}active{% endif %}"  -->
+       <!-- href="{{ url_for('brands') }}"> -->
+        <!-- <i class="fas fa-tags"></i> Marcas -->
+    <!-- </a> -->
+</li><!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="{{ get_setting('theme', 'dark') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4a148c">
+    <meta name="description" content="Sistema de gerenciamento de estoque para materiais de impressão 3D">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Estoque3D">
+    
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    
+    <title>{% block title %}3D Global Store{% endblock %}</title>
+    
+    <!-- No arquivo base.html -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- jsPDF for PDF reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            {% if current_user.is_authenticated %}
+            <button class="btn sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            {% endif %}
+            
+            <a class="navbar-brand" href="{{ url_for('dashboard' if current_user.is_authenticated else 'login') }}">
+                <i class="fas fa-cube me-2"></i>3D Global Store
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-id-card me-2"></i>Meu Perfil
+                            </a></li>
+                            {% if current_user.role == 'admin' %}
+                            <li><a class="dropdown-item" href="{{ url_for('users') }}">
+                                <i class="fas fa-users me-2"></i>Gerenciar Usuários
+                            </a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Sair
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="content-wrapper">
+        
+        {% if current_user.is_authenticated %}
+        
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-sticky">
+                <div class="sidebar-heading">Principal</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" 
+                           href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-heading">Estoque</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'items' %}active{% endif %}" 
+                           href="{{ url_for('items') }}">
+                            <i class="fas fa-boxes"></i> Itens
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'brands' %}active{% endif %}" 
+                           href="{{ url_for('brands') }}">
+                            <i class="fas fa-tags"></i> Marcas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'substocks' %}active{% endif %}" 
+                           href="{{ url_for('substocks') }}">
+                            <i class="fas fa-warehouse"></i> Sub-Estoques
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'item_types' %}active{% endif %}" 
+                           href="{{ url_for('item_types') }}">
+                            <i class="fas fa-tags"></i> Tipos de Item
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'units' %}active{% endif %}" 
+                           href="{{ url_for('units') }}">
+                            <i class="fas fa-ruler"></i> Unidades de Medida
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-heading">Movimentações</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'movements' %}active{% endif %}" 
+                           href="{{ url_for('movements') }}">
+                            <i class="fas fa-exchange-alt"></i> Movimentações
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'purchase_orders' %}active{% endif %}" 
+                           href="{{ url_for('purchase_orders') }}">
+                            <i class="fas fa-shopping-cart"></i> Pedidos de Compra
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-heading">Projetos</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'projects' %}active{% endif %}" 
+                           href="{{ url_for('projects') }}">
+                            <i class="fas fa-project-diagram"></i> Projetos
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-heading">Relatórios</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" 
+                           href="{{ url_for('reports') }}">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-heading">Sistema</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'stock_alerts' %}active{% endif %}" 
+                           href="{{ url_for('stock_alerts') }}">
+                            <i class="fas fa-bell"></i> Alertas de Estoque
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}" 
+                           href="{{ url_for('settings') }}">
+                            <i class="fas fa-cog"></i> Configurações
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="main-content {% if not current_user.is_authenticated %}w-100{% endif %}">           
+            <div class="container-fluid">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Page Title -->
+                {% if title %}
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h2">{{ title }}</h1>
+                    {% block page_actions %}{% endblock %}
+                </div>
+                {% endif %}
+                
+                <!-- Main Content -->
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast container for notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/inventory.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    
+    <script>
+           // Script existente para sidebar toggle...
+    
+    // Adicione este código para ajustar o tema
+    document.addEventListener('DOMContentLoaded', function() {
+        // Detecta o tema atual
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        
+        // Função para ajustar elementos específicos com base no tema
+        function adjustThemeElements(theme) {
+            if (theme === 'light') {
+                // Ajusta elementos que não respondem automaticamente ao tema
+                document.querySelectorAll('.sidebar-heading').forEach(el => {
+                    el.style.color = 'var(--sidebar-heading)';
+                });
+                
+                // Corrige cores de ícones para melhorar a visibilidade
+                document.querySelectorAll('.fas, .far, .fa').forEach(icon => {
+                    if (!icon.closest('.nav-link.active') && 
+                        !icon.closest('.btn') && 
+                        !icon.closest('.card-header')) {
+                        icon.style.color = '#495057';
+                    }
+                });
+            } else {
+                // Reset para o tema escuro
+                document.querySelectorAll('.sidebar-heading').forEach(el => {
+                    el.style.color = '';
+                });
+                
+                document.querySelectorAll('.fas, .far, .fa').forEach(icon => {
+                    icon.style.color = '';
+                });
+            }
+        }
+        
+        // Aplica ajustes no carregamento
+        adjustThemeElements(currentTheme);
+        
+        // Monitora mudanças no tema (útil na página de configurações)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'data-bs-theme') {
+                    adjustThemeElements(document.documentElement.getAttribute('data-bs-theme'));
+                }
+            });
+        });
+        
+        observer.observe(document.documentElement, { attributes: true });
+    });
+        // Aplicar o tema na carga da página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obter tema atual do atributo data-bs-theme do html
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            
+            // Garantir que elementos da interface reflitam o tema atual
+            const themeSelect = document.getElementById('theme');
+            if (themeSelect && themeSelect.value !== currentTheme) {
+                themeSelect.value = currentTheme;
+            }
+            
+            // Aplicar classes específicas baseadas no tema
+            if (currentTheme === 'light') {
+                document.querySelectorAll('.bg-dark').forEach(el => {
+                    if (!el.classList.contains('navbar')) {
+                        el.classList.replace('bg-dark', 'bg-light');
+                    }
+                });
+            }
+        });
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebarToggle && sidebar && mainContent) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    mainContent.classList.toggle('sidebar-open');
+                });
+            }
+        });
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/js/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrado com sucesso:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Falha ao registrar ServiceWorker:', error);
+                    });
+            });
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

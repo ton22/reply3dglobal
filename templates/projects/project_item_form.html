@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    {% if item %}
+                    <i class="fas fa-edit me-2"></i>Editar Item no Projeto
+                    {% else %}
+                    <i class="fas fa-plus me-2"></i>Adicionar Item ao Projeto
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Projeto: <strong>{{ project.name }}</strong>
+                </div>
+                
+                <form method="POST" action="{{ url_for('edit_project_item', project_id=project.id, item_id=item.id) if item else url_for('add_project_item', project_id=project.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.item_id.label(class="form-label") }}
+                        {% if item %}
+                        {{ form.item_id(class="form-select", disabled=true) }}
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        {% else %}
+                        {{ form.item_id(class="form-select") }}
+                        {% endif %}
+                        {% if form.item_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.item_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.quantity.label(class="form-label") }}
+                        {{ form.quantity(class="form-control", type="number", step="0.01", min="0.01") }}
+                        {% if form.quantity.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.quantity.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Quantidade necessária para este projeto.
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

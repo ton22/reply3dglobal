@@ -1,0 +1,41 @@
+# Movimentações
+
+## Visão Geral
+
+O módulo de movimentações permite gerenciar todas as entradas e saídas de materiais no sistema. Através deste módulo, você pode:
+
+- Registrar entradas de materiais
+- Registrar saídas de materiais
+- Acompanhar o histórico de movimentações
+- Gerar relatórios de movimentação
+
+## Tipos de Movimentação
+
+### Entrada
+- Compra de materiais
+- Doação
+- Devolução de projeto
+
+### Saída
+- Uso em projetos
+- Perda/Descarte
+- Empréstimo
+
+## Como Registrar uma Movimentação
+
+1. Acesse o menu "Movimentações"
+2. Clique em "Nova Movimentação"
+3. Selecione o tipo de movimentação
+4. Preencha os dados necessários
+5. Confirme a operação
+
+## Histórico
+
+Todas as movimentações são registradas com:
+- Data e hora
+- Usuário responsável
+- Tipo de movimentação
+- Quantidade
+- Material
+- Projeto (quando aplicável)
+- Observações 

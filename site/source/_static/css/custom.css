@@ -1,0 +1,127 @@
+/* Custom theme colors */
+:root {
+    --primary-color: #2196F3;
+    --secondary-color: #1976D2;
+    --accent-color: #FFC107;
+    --text-color: #333333;
+    --background-color: #FFFFFF;
+    --sidebar-color: #F5F5F5;
+}
+
+/* Logo styling */
+.wy-side-nav-search {
+    background-color: var(--primary-color);
+}
+
+.wy-side-nav-search > div.version {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Navigation styling */
+.wy-nav-side {
+    background-color: var(--sidebar-color);
+}
+
+.wy-menu-vertical li.current {
+    background-color: var(--secondary-color);
+}
+
+.wy-menu-vertical li.current > a {
+    color: white;
+}
+
+/* Content styling */
+.wy-nav-content {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* Code blocks */
+.highlight {
+    background-color: #F8F9FA;
+    border-radius: 4px;
+    padding: 1em;
+}
+
+/* Tables */
+.wy-table-responsive table td, .wy-table-responsive table th {
+    white-space: normal;
+}
+
+/* API documentation */
+.endpoint {
+    background-color: #F8F9FA;
+    border-left: 4px solid var(--primary-color);
+    padding: 1em;
+    margin: 1em 0;
+}
+
+/* Callouts */
+.rst-content .admonition {
+    border-radius: 4px;
+}
+
+.rst-content .note {
+    background-color: #E3F2FD;
+    border-left-color: var(--primary-color);
+}
+
+.rst-content .warning {
+    background-color: #FFF3E0;
+    border-left-color: #FF9800;
+}
+
+.rst-content .danger {
+    background-color: #FFEBEE;
+    border-left-color: #F44336;
+}
+
+/* Responsive design */
+@media screen and (max-width: 768px) {
+    .wy-nav-content-wrap {
+        margin-left: 0;
+    }
+    
+    .wy-nav-side {
+        left: 0;
+    }
+}
+
+/* Code examples */
+.code-example {
+    margin: 1em 0;
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+}
+
+.code-example pre {
+    margin: 0;
+    border-radius: 0;
+}
+
+.code-example .caption {
+    background-color: #F5F5F5;
+    padding: 0.5em;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+/* Screenshots */
+.screenshot {
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    margin: 1em 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.screenshot img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.screenshot .caption {
+    background-color: #F5F5F5;
+    padding: 0.5em;
+    border-top: 1px solid #E0E0E0;
+    text-align: center;
+} 

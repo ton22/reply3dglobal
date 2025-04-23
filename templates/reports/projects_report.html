@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Projetos - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <button class="btn btn-secondary me-2 toggle-filters">
+        <i class="fas fa-filter me-1"></i>Filtros
+    </button>
+    <button class="btn btn-primary me-2 generate-pdf" data-report-type="projects" data-title="Relatório de Projetos">
+        <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Form -->
+<div class="card mb-4 filter-container {% if not start_date and not end_date and status == 'all' %}d-none{% endif %}">
+    <div class="card-body">
+        <form id="date-filter-form" method="GET" action="{{ url_for('projects_report') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Data Final</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-6">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% for status_option in statuses %}
+                    <option value="{{ status_option.value }}" {% if status == status_option.value %}selected{% endif %}>
+                        {{ status_option.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="reset" class="btn btn-secondary me-2">Limpar</button>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Projects Summary -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Resumo dos Projetos</h5>
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Período: 
+                    <strong>
+                        {% if start_date %}{{ start_date }}{% else %}Início{% endif %}
+                        a 
+                        {% if end_date %}{{ end_date }}{% else %}Hoje{% endif %}
+                    </strong>
+                    <br>
+                    <i class="fas fa-filter me-2"></i>
+                    Status: 
+                    <strong>
+                        {{ {'all': 'Todos', 'active': 'Ativos', 'completed': 'Concluídos', 'cancelled': 'Cancelados'}[status] }}
+                    </strong>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ projects|length }}</h3>
+                                <p class="mb-0">Total de Projetos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ projects|selectattr('status', 'equalto', 'active')|list|length }}</h3>
+                                <p class="mb-0">Projetos Ativos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ projects|selectattr('status', 'equalto', 'completed')|list|length }}</h3>
+                                <p class="mb-0">Projetos Concluídos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Projetos por Status</h5>
+                <div class="chart-container">
+                    <canvas id="projects-status-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Table -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Lista de Projetos</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if projects %}
+        <div class="table-responsive">
+            <table class="table table-hover report-table-projects mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Cliente</th>
+                        <th>Status</th>
+                        <th>Data Início</th>
+                        <th>Data Fim</th>
+                        <th>Duração (dias)</th>
+                        <th>Itens</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('project_detail', project_id=project.id) }}">{{ project.name }}</a>
+                        </td>
+                        <td>{{ project.client_name or '-' }}</td>
+                        <td>
+                            <span class="status-badge status-{{ project.status }}">
+                                {{ {'active': 'Ativo', 'completed': 'Concluído', 'cancelled': 'Cancelado'}[project.status] }}
+                            </span>
+                        </td>
+                        <td>{{ project.start_date.strftime('%d/%m/%Y') if project.start_date else '-' }}</td>
+                        <td>{{ project.end_date.strftime('%d/%m/%Y') if project.end_date else '-' }}</td>
+                        <td>
+                            {% if project.start_date and project.end_date %}
+                                {{ (project.end_date - project.start_date).days }}
+                            {% elif project.start_date %}
+                                Em andamento
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ project.items|length }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-project-diagram fa-3x mb-3 text-muted"></i>
+            <p class="text-muted">Nenhum projeto encontrado com os filtros selecionados.</p>
+            <button class="btn btn-secondary toggle-filters">
+                <i class="fas fa-filter me-1"></i>Ajustar Filtros
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Project Status Chart
+        const ctx = document.getElementById('projects-status-chart').getContext('2d');
+        
+        // Count projects by status
+        let activeCount = 0;
+        let completedCount = 0;
+        let cancelledCount = 0;
+        
+        {% for project in projects %}
+            {% if project.status == 'active' %}
+                activeCount++;
+            {% elif project.status == 'completed' %}
+                completedCount++;
+            {% elif project.status == 'cancelled' %}
+                cancelledCount++;
+            {% endif %}
+        {% endfor %}
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ativos', 'Concluídos', 'Cancelados'],
+                datasets: [{
+                    data: [activeCount, completedCount, cancelledCount],
+                    backgroundColor: ['#36A2EB', '#4BC0C0', '#FF6384']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+        
+        // Form reset - handle the redirect
+        document.querySelector('form button[type="reset"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '{{ url_for("projects_report") }}';
+        });
+    });
+</script>
+{% endblock %}

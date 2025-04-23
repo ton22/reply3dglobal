@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Tipos de Item - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <a href="{{ url_for('new_item_type') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Novo Tipo
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        {% if types %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th>Criado em</th>
+                        <th>Quantidade de Itens</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for type in types %}
+                    <tr>
+                        <td>{{ type.id }}</td>
+                        <td>{{ type.name }}</td>
+                        <td>{{ type.description or '-' }}</td>
+                        <td>{{ type.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ type.items|length }}</td>
+                        <td>
+                            <a href="{{ url_for('items') }}?item_type={{ type.id }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye me-1"></i>Ver Itens
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info m-3">
+            <i class="fas fa-info-circle me-2"></i>Nenhum tipo de item cadastrado.
+        </div>
+        <div class="text-center mb-3">
+            <a href="{{ url_for('new_item_type') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Cadastrar Primeiro Tipo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Tipos de Item Recomendados</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-dice-d20 me-2"></i>Filamentos
+                    </div>
+                    <div class="card-body">
+                        <p>Materiais de impressão como PLA, ABS, PETG, TPU, Nylon, etc.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-tools me-2"></i>Ferramentas
+                    </div>
+                    <div class="card-body">
+                        <p>Ferramentas para manutenção, acabamento e reparos nas impressoras.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-cogs me-2"></i>Peças de Reposição
+                    </div>
+                    <div class="card-body">
+                        <p>Componentes para reparos e manutenção nas impressoras 3D.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-microscope me-2"></i>Insumos de Acabamento
+                    </div>
+                    <div class="card-body">
+                        <p>Lixas, primers, tintas e outros materiais para finalização de peças.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-box-open me-2"></i>Embalagens
+                    </div>
+                    <div class="card-body">
+                        <p>Materiais para embalagem e transporte de produtos impressos.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-print me-2"></i>Impressoras
+                    </div>
+                    <div class="card-body">
+                        <p>As próprias impressoras 3D que compõem o parque de equipamentos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

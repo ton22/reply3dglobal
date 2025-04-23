@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Estoque Baixo{% endblock %}
+
+{% block styles %}
+<style>
+.chart-wrapper {
+    position: relative;
+    height: 400px;
+    margin-bottom: 2rem;
+}
+.card-body {
+    background-color: #343a40;
+    border-radius: 0.25rem;
+}
+
+@media print {
+    body {
+        background: white;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+    }
+    .btn-group, .navbar, .footer {
+        display: none !important;
+    }
+    .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .table th, .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+    .table th {
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+    }
+    .alert {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    .chart-wrapper {
+        page-break-inside: avoid;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Relatório de Estoque Baixo</h1>
+        <div class="btn-group">
+            <button id="export-pdf" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i> Exportar PDF
+            </button>
+            <a href="{{ url_for('export_low_stock_csv') }}" class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </a>
+        </div>
+    </div>
+
+    {% if low_stock_items %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        Existem {{ low_stock_items|length }} itens com estoque abaixo do mínimo.
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="chart-wrapper">
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped" id="low-stock-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Estoque Atual</th>
+                    <th>% do Mínimo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in low_stock_items %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.minimum_stock }}</td>
+                    <td>{{ item.current_stock }}</td>
+                    <td>{{ "%.1f"|format((item.current_stock / item.minimum_stock * 100) if item.minimum_stock > 0 else 0) }}%</td>
+                    <td>
+                        <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-info" title="Visualizar Item">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        Não há itens com estoque abaixo do mínimo.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+    'use strict';
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if low_stock_items %}
+        // Inicializa o gráfico
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        const chartData = {
+            labels: {{ item_names|tojson|safe }},
+            datasets: [{
+                label: 'Porcentagem do Estoque',
+                data: {{ stock_percentages|tojson|safe }},
+                backgroundColor: {{ colors|tojson|safe }},
+                borderColor: {{ colors|tojson|safe }},
+                borderWidth: 1
+            }]
+        };
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#fff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#fff'
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#fff'
+                    }
+                }
+            }
+        };
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: chartOptions
+        });
+
+        // Configuração da exportação PDF
+        document.getElementById('export-pdf').addEventListener('click', function() {
+            const doc = new jspdf.jsPDF();
+            
+            // Título
+            doc.setFontSize(18);
+            doc.text('Relatório de Estoque Baixo', 14, 20);
+            
+            // Data do relatório
+            doc.setFontSize(12);
+            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
+            
+            // Mensagem de alerta
+            doc.setFontSize(12);
+            doc.text(`Existem {{ low_stock_items|length }} itens com estoque abaixo do mínimo.`, 14, 40);
+            
+            // Tabela
+            doc.autoTable({
+                html: '#low-stock-table',
+                startY: 50,
+                theme: 'grid',
+                headStyles: { fillColor: [52, 58, 64] },
+                columnStyles: {
+                    4: { cellWidth: 30 } // Ajusta a largura da coluna de ações
+                }
+            });
+            
+            // Salva o PDF
+            doc.save('relatorio_estoque_baixo.pdf');
+        });
+        {% endif %}
+    });
+})();
+</script>
+{% endblock %}

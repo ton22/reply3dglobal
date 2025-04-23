@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Pedido de Compra - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>Novo Pedido de Compra
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('new_purchase_order') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.po_number.label(class="form-label") }}
+                        {{ form.po_number(class="form-control") }}
+                        {% if form.po_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.po_number.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Deixe em branco para gerar automaticamente um número de pedido
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.supplier.label(class="form-label") }}
+                        {{ form.supplier(class="form-control") }}
+                        {% if form.supplier.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.supplier.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Após criar o pedido, você poderá adicionar itens a ele.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('purchase_orders') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Criar Pedido
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

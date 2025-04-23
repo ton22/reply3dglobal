@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Offline - Estoque3D{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="display-4 mb-4">Você está offline</h1>
+                    <i class="fas fa-wifi-slash fa-5x mb-4 text-danger"></i>
+                    <p class="lead">Parece que você perdeu a conexão com a internet.</p>
+                    <p>Algumas funcionalidades podem estar limitadas enquanto você estiver offline.</p>
+                    <div class="mt-4">
+                        <button class="btn btn-primary" onclick="tryReconnect()">
+                            <i class="fas fa-sync-alt me-2"></i>Tentar reconectar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %} 

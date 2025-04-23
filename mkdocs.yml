@@ -1,0 +1,94 @@
+site_name: Estoque3D
+site_description: Sistema de gerenciamento de estoque para materiais de impressão 3D
+site_author: Wellington Castro DevTon
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - search.share
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+
+nav:
+  - Início: index.md
+  - Guia do Usuário:
+    - Introdução: user-guide/introduction.md
+    - Autenticação: user-guide/authentication.md
+    - Itens: user-guide/items.md
+    - Movimentações: user-guide/movements.md
+    - Projetos: user-guide/projects.md
+    - Relatórios: user-guide/reports.md
+    - Uso: user-guide/usage.md
+  - Desenvolvimento:
+    - Visão Geral: development/development.md
+    - Estrutura: development/structure.md
+    - Modelos: development/models.md
+    - Rotas: development/routes.md
+    - Formulários: development/forms.md
+    - API: development/api.md
+  - Configuração: configuration/configuration.md
+  - Primeiros Passos: getting-started/installation.md
+  - API: api/api.md
+  - Arquitetura: architecture/architecture.md
+  - Autores: AUTHORS.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/seu-usuario/estoque3d
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/seu-servidor
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde

@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Movimentação - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>Nova Movimentação
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('new_movement') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.item_id.label(class="form-label") }}
+                            {{ form.item_id(class="form-select") }}
+                            {% if form.item_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.item_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.movement_type_id.label(class="form-label") }}
+                            {{ form.movement_type_id(class="form-select") }}
+                            {% if form.movement_type_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.movement_type_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.quantity.label(class="form-label") }}
+                            {{ form.quantity(class="form-control", type="number", step="0.01", min="0.01") }}
+                            {% if form.quantity.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.quantity.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.purchase_order_id.label(class="form-label") }}
+                            {{ form.purchase_order_id(class="form-select") }}
+                            {% if form.purchase_order_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.purchase_order_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.source_substock_id.label(class="form-label") }}
+                            {{ form.source_substock_id(class="form-select") }}
+                            {% if form.source_substock_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.source_substock_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Selecione o sub-estoque de origem (para saídas e transferências)
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.destination_substock_id.label(class="form-label") }}
+                            {{ form.destination_substock_id(class="form-select") }}
+                            {% if form.destination_substock_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.destination_substock_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Selecione o sub-estoque de destino (para entradas e transferências)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.project_id.label(class="form-label") }}
+                            {{ form.project_id(class="form-select") }}
+                            {% if form.project_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.project_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Associar a um projeto (opcional)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.reference_code.label(class="form-label") }}
+                        {{ form.reference_code(class="form-control") }}
+                        {% if form.reference_code.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.reference_code.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Código de referência como nota fiscal, ordem de serviço, etc. (opcional)
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('movements') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Registrar Movimentação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide relevant fields based on movement type
+        const movementTypeSelect = document.getElementById('movement_type_id');
+        const sourceField = document.getElementById('source_substock_id').closest('.col-md-6');
+        const destField = document.getElementById('destination_substock_id').closest('.col-md-6');
+        const purchaseOrderSelect = document.getElementById('purchase_order_id');
+        const itemSelect = document.getElementById('item_id');
+        const quantityInput = document.getElementById('quantity');
+        
+        function updateFields() {
+            const selectedOption = movementTypeSelect.options[movementTypeSelect.selectedIndex];
+            const typeName = selectedOption.text.toLowerCase();
+            
+            // Default show both fields
+            sourceField.style.display = '';
+            destField.style.display = '';
+            
+            // Hide fields based on movement type
+            if (typeName === 'entrada') {
+                sourceField.style.display = 'none';
+            } else if (typeName === 'saída') {
+                destField.style.display = 'none';
+            } else if (typeName === 'reciclagem') {
+                destField.style.display = 'none';
+            }
+        }
+
+        // Update fields when movement type changes
+        movementTypeSelect.addEventListener('change', updateFields);
+        
+        // Load purchase order data when a purchase order is selected
+        purchaseOrderSelect.addEventListener('change', async function() {
+            const poId = this.value;
+            console.log('[DEBUG] Purchase Order Change Event');
+            console.log('[DEBUG] Selected purchase order:', poId);
+            
+            // Clear and reset item select
+            itemSelect.innerHTML = '<option value="">Selecione um item</option>';
+            
+            if (poId && poId !== '0') {
+                try {
+                    console.log('[DEBUG] Fetching items from:', `/api/purchase_orders/${poId}/items`);
+                    const response = await fetch(`/api/purchase_orders/${poId}/items`);
+                    console.log('[DEBUG] API Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('[DEBUG] Raw API response:', data);
+                    
+                    if (data && data.items && Array.isArray(data.items)) {
+                        const availableItems = data.items.filter(item => {
+                            if (!item || typeof item !== 'object') {
+                                console.log('[DEBUG] Invalid item format:', item);
+                                return false;
+                            }
+                            
+                            const available = item.quantity - item.received_quantity;
+                            const percentage = (item.received_quantity / item.quantity * 100).toFixed(1);
+                            const status = item.received_quantity === 0 ? 'Pendente' : 
+                                         item.received_quantity === item.quantity ? 'Completo' : 
+                                         'Parcial';
+                            const statusClass = item.received_quantity === 0 ? 'text-danger' : 
+                                              item.received_quantity === item.quantity ? 'text-success' : 
+                                              'text-warning';
+                            
+                            console.log('[DEBUG] Item:', item.name, 
+                                'Available:', available, 
+                                'Total:', item.quantity, 
+                                'Received:', item.received_quantity,
+                                'Progress:', percentage + '%',
+                                'Status:', status);
+                            return available > 0;
+                        });
+                        
+                        console.log('[DEBUG] Available items after filtering:', availableItems);
+                        
+                        if (availableItems.length > 0) {
+                            availableItems.forEach(item => {
+                                const available = item.quantity - item.received_quantity;
+                                const percentage = (item.received_quantity / item.quantity * 100).toFixed(1);
+                                const status = item.received_quantity === 0 ? 'Pendente' : 
+                                             item.received_quantity === item.quantity ? 'Completo' : 
+                                             'Parcial';
+                                const statusClass = item.received_quantity === 0 ? 'text-danger' : 
+                                                  item.received_quantity === item.quantity ? 'text-success' : 
+                                                  'text-warning';
+                                
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.className = statusClass;
+                                option.textContent = `${item.name} (${available}/${item.quantity} - ${percentage}% - ${status})`;
+                                option.title = `Item: ${item.name}\nTotal: ${item.quantity} unidades\nRecebido: ${item.received_quantity} unidades\nDisponível: ${available} unidades\nStatus: ${status}\nProgresso: ${percentage}%`;
+                                console.log('[DEBUG] Adding option:', option.textContent);
+                                itemSelect.appendChild(option);
+                            });
+                        } else {
+                            console.log('[DEBUG] No available items found for this purchase order');
+                            const option = document.createElement('option');
+                            option.value = "";
+                            option.textContent = "Nenhum item disponível neste pedido";
+                            itemSelect.appendChild(option);
+                        }
+                    } else {
+                        console.log('[DEBUG] Invalid data format received from API:', data);
+                        throw new Error('Invalid data format received from API');
+                    }
+                } catch (error) {
+                    console.error('[DEBUG] Error loading purchase order items:', error);
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "Erro ao carregar itens";
+                    itemSelect.appendChild(option);
+                }
+            } else {
+                console.log('[DEBUG] No purchase order selected, loading default items');
+                const choices = {{ form.item_id.choices|tojson|safe }};
+                console.log('[DEBUG] Default items:', choices);
+                
+                if (Array.isArray(choices)) {
+                    choices.forEach(([value, text]) => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = text;
+                        console.log('[DEBUG] Adding default option:', text);
+                        itemSelect.appendChild(option);
+                    });
+                }
+            }
+            
+            // Reset quantity
+            quantityInput.value = '';
+        });
+
+        // Load item quantity when an item is selected
+        itemSelect.addEventListener('change', async function() {
+            const poId = purchaseOrderSelect.value;
+            const itemId = this.value;
+            console.log('[DEBUG] Item Change Event');
+            console.log('[DEBUG] Selected item:', itemId, 'from purchase order:', poId);
+            
+            if (poId && poId !== '0' && itemId) {
+                try {
+                    console.log('[DEBUG] Fetching item data from:', `/api/purchase_orders/${poId}/items/${itemId}`);
+                    const response = await fetch(`/api/purchase_orders/${poId}/items/${itemId}`);
+                    console.log('[DEBUG] API Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('[DEBUG] Item data:', data);
+                    
+                    const availableQuantity = data.quantity - data.received_quantity;
+                    console.log('[DEBUG] Setting quantity to:', availableQuantity);
+                    quantityInput.value = availableQuantity;
+                } catch (error) {
+                    console.error('[DEBUG] Error loading item quantity:', error);
+                }
+            }
+        });
+        
+        // Initial update
+        updateFields();
+
+        // Verificar se veio de um pedido de compra e se foi bem-sucedido
+        const purchaseOrderId = {% if form.purchase_order_id.data %}{{ form.purchase_order_id.data|tojson|safe }}{% else %}null{% endif %};
+        const successMessage = {% if 'success' in get_flashed_messages() %}true{% else %}false{% endif %};
+
+        if (purchaseOrderId && successMessage) {
+            // Aguardar 1 segundo e redirecionar para a página de pedidos de compra com refresh
+            setTimeout(function() {
+                window.location.href = "{{ url_for('purchase_orders') }}";
+            }, 1000);
+        }
+
+        // Adicionar listener para o formulário
+        document.querySelector('form').addEventListener('submit', function(e) {
+            // Desabilitar o botão de submit para evitar múltiplos envios
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+        });
+    });
+</script>
+{% endblock %}

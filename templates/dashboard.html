@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - 3D Global Store{% endblock %}
+
+{% block extra_head %}
+<style>
+    .low-stock-alert {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Summary Cards Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card dashboard-card h-100 mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="card-icon text-primary">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-subtitle text-muted">Total de Itens</h6>
+                        <div class="card-value">{{ total_items }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card dashboard-card h-100 mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="card-icon text-success">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-subtitle text-muted">Sub-Estoques</h6>
+                        <div class="card-value">{{ total_substocks }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card dashboard-card h-100 mb-3 {% if low_stock_items|length > 0 %}low-stock-alert{% endif %}">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="card-icon {% if low_stock_items|length > 0 %}text-danger{% else %}text-success{% endif %}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-subtitle text-muted">Itens Abaixo do Mínimo</h6>
+                        <div class="card-value">{{ low_stock_items|length }}</div>
+                    </div>
+                </div>
+            </div>
+            {% if low_stock_items|length > 0 %}
+            <div class="card-footer p-2">
+                <a href="{{ url_for('low_stock_report') }}" class="btn btn-sm btn-danger w-100">
+                    <i class="fas fa-eye me-1"></i>Ver Relatório
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card dashboard-card h-100 mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="card-icon text-info">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-subtitle text-muted">Movimentações Recentes</h6>
+                        <div class="card-value">{{ recent_movements|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Data Row -->
+<div class="row mb-4">
+    <!-- Stock Distribution Chart -->
+    <div class="col-md-6">
+        <div class="card mb-4 h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Distribuição de Estoque</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="stockDistributionChart" data-chart='{{ chart_data|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Items Card -->
+    <div class="col-md-6">
+        <div class="card mb-4 h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Itens com Estoque Baixo</h5>
+                {% if low_stock_items|length > 0 %}
+                <a href="{{ url_for('auto_generate_po') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-shopping-cart me-1"></i>Gerar Pedido
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                {% if low_stock_items|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Atual</th>
+                                <th>Mínimo</th>
+                                <th>Falta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_items %}
+                            <tr>
+                                <td><a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.name }}</a></td>
+                                <td class="text-danger">{{ item.current_stock }} {{ item.unit }}</td>
+                                <td>{{ item.minimum_stock }} {{ item.unit }}</td>
+                                <td>{{ item.minimum_stock - item.current_stock }} {{ item.unit }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                        <p>Todos os itens estão com estoque acima do mínimo.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities Row -->
+<div class="row">
+    <!-- Recent Movements -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Movimentações Recentes</h5>
+                <a href="{{ url_for('movements') }}" class="btn btn-sm btn-primary">
+                    Ver Todas
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_movements %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Item</th>
+                                <th>Tipo</th>
+                                <th>Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movement in recent_movements %}
+                            <tr>
+                                <td>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ movement.item.name }}</td>
+                                <td>{{ movement.movement_type.name }}</td>
+                                <td>{{ movement.quantity }} {{ movement.item.unit.symbol }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted p-4">
+                    <p>Nenhuma movimentação recente encontrada.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Items -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Itens com Maior Estoque</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if top_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Tipo</th>
+                                <th>Quantidade Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item, total_quantity in top_items %}
+                            <tr>
+                                <td><a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.name }}</a></td>
+                                <td>{{ item.item_type.name }}</td>
+                                <td>{{ total_quantity }} {{ item.unit.symbol }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted p-4">
+                    <p>Nenhum item em estoque.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Check if there are low stock items and show toast notification
+    document.addEventListener('DOMContentLoaded', function() {
+        const lowStockItems = {{ low_stock_items|tojson }};
+        if (lowStockItems.length > 0) {
+            showLowStockAlerts(lowStockItems);
+        }
+    });
+</script>
+{% endblock %}

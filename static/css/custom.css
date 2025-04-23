@@ -1,0 +1,431 @@
+/* Custom styles for 3D Global Store */
+
+:root {
+  --primary-color: #3F51B5;
+  --secondary-color: #FF4081;
+  --accent-color: #00BCD4;
+  --success-color: #4CAF50;
+  --warning-color: #FFC107;
+  --danger-color: #F44336;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --background-color: #212529;
+  --card-bg: #2c3034;
+  --border-color: #495057;
+}
+
+/* General Styles */
+body {
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+  padding-top: 56px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar */
+.sidebar {
+  min-width: 250px;
+  width: 250px;
+  height: calc(100vh - 56px);
+  position: fixed;
+  top: 56px;
+  left: 0;
+  padding: 0;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  z-index: 999;
+  transition: all 0.3s;
+}
+
+.sidebar-sticky {
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 56px);
+  padding-top: 0.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.sidebar .nav-link {
+  font-weight: 500;
+  color: var(--light-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  margin: 0.15rem 0.5rem;
+}
+
+.sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+  color: #fff;
+  background-color: var(--primary-color);
+}
+
+.sidebar .nav-link i {
+  margin-right: 0.5rem;
+  width: 1.25rem;
+  text-align: center;
+}
+
+.sidebar-heading {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.main-content {
+  margin-left: 250px;
+  padding: 2rem;
+  transition: all 0.3s;
+}
+
+/* Sidebar Toggle */
+.sidebar-toggle {
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+/* For mobile: hide sidebar by default */
+@media (max-width: 768px) {
+  .sidebar {
+    margin-left: -250px;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .sidebar.show {
+    margin-left: 0;
+  }
+  
+  .main-content.sidebar-open {
+    margin-left: 250px;
+  }
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-card .card-header {
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 500;
+}
+
+.dashboard-card .card-icon {
+  font-size: 2.5rem;
+  margin-right: 1rem;
+}
+
+.dashboard-card .card-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Alert styles */
+.alert-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50%;
+  background-color: var(--danger-color);
+  color: white;
+  font-size: 0.75rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Stock level indicators */
+.stock-level {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.stock-level.low {
+  background-color: var(--danger-color);
+}
+
+.stock-level.medium {
+  background-color: var(--warning-color);
+}
+
+.stock-level.high {
+  background-color: var(--success-color);
+}
+
+/* Inventory Items Table */
+.inventory-table th, .movement-table th {
+  position: sticky;
+  top: 0;
+  background-color: var(--dark-color);
+  z-index: 10;
+}
+
+.inventory-table .item-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+/* Movement Types */
+.movement-entry {
+  color: var(--success-color);
+}
+
+.movement-exit {
+  color: var(--danger-color);
+}
+
+.movement-transfer {
+  color: var(--primary-color);
+}
+
+.movement-recycle {
+  color: var(--accent-color);
+}
+
+.movement-loss {
+  color: var(--warning-color);
+}
+
+/* Project Status */
+.status-badge {
+  padding: 0.35em 0.65em;
+  border-radius: 0.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75em;
+}
+
+.status-active {
+  background-color: rgba(var(--bs-primary-rgb), 0.2);
+  color: var(--bs-primary);
+}
+
+.status-completed {
+  background-color: rgba(var(--bs-success-rgb), 0.2);
+  color: var(--bs-success);
+}
+
+.status-cancelled {
+  background-color: rgba(var(--bs-danger-rgb), 0.2);
+  color: var(--bs-danger);
+}
+
+/* Purchase Order Status */
+.po-status-draft {
+  background-color: rgba(var(--bs-secondary-rgb), 0.2);
+  color: var(--bs-secondary);
+}
+
+.po-status-sent {
+  background-color: rgba(var(--bs-primary-rgb), 0.2);
+  color: var(--bs-primary);
+}
+
+.po-status-received {
+  background-color: rgba(var(--bs-success-rgb), 0.2);
+  color: var(--bs-success);
+}
+
+.po-status-cancelled {
+  background-color: rgba(var(--bs-danger-rgb), 0.2);
+  color: var(--bs-danger);
+}
+
+/* Form styles */
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  height: 250px;
+  margin-bottom: 1.5rem;
+}
+
+/* Alerts and notifications */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1050;
+}
+
+/* Report styles */
+.report-header {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.filter-container {
+  background-color: var(--card-bg);
+  border-radius: 0.25rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+/* Print styles */
+@media print {
+  .sidebar, .navbar, .no-print {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 0;
+  }
+  
+  body {
+    padding-top: 0;
+  }
+  
+  .container-fluid {
+    padding: 0;
+  }
+  
+  .card {
+    border: none;
+  }
+}
+/* --- TEMA CLARO --- */
+[data-bs-theme="light"] {
+  --sidebar-bg: #F5F7FA;         /* Off-white quente */
+  --sidebar-text: #4B5563;       /* Cinza-escuro suave */
+  --sidebar-active: #4F46E5;     /* Índigo (destaque profissional) */
+  --sidebar-border: #E5E7EB;     /* Borda bege-clara */
+  --sidebar-heading: #6B7280;    /* Cinza médio */
+  --sidebar-hover: #E0E7FF;      /* Hover azul pastel */
+}
+
+/* --- TEMA ESCURO --- */
+[data-bs-theme="dark"] {
+  --sidebar-bg: #111827;         /* Azul-terroso escuro */
+  --sidebar-text: #D1D5DB;       /* Cinza claro */
+  --sidebar-active: #818CF8;     /* Lavanda (destaque suave) */
+  --sidebar-border: #374151;     /* Borda escura */
+  --sidebar-heading: #9CA3AF;    /* Cinza-claro */
+  --sidebar-hover: #1F2937;      /* Hover escuro */
+}
+/* Ajustes para tema claro/escuro
+
+ORIGINAL
+[data-bs-theme="light"] {
+  --sidebar-bg: #93abc4;
+  --sidebar-text: #212529;
+  --sidebar-active: #0d6efd;
+  --sidebar-border: #dee2e6;
+  --sidebar-heading: #6c757d;
+}
+
+[data-bs-theme="dark"] {
+  --sidebar-bg: #48525c;
+  --sidebar-text: #f8f9fa;
+  --sidebar-active: #0d6efd;
+  --sidebar-border: #495057;
+  --sidebar-heading: #adb5bd;
+} */
+
+/* Estilos da barra lateral ajustados para os temas */
+.sidebar {
+  background-color: var(--sidebar-bg) !important;
+  border-right: 2px solid var(--sidebar-border);
+}
+
+.sidebar .sidebar-heading {
+  color: var(--sidebar-heading);
+}
+
+.sidebar .nav-link {
+  color: var(--sidebar-text);
+}
+
+.sidebar .nav-link:hover {
+  color: var(--sidebar-active);
+}
+/*cor das letrar na nav bar quando selecionada*/
+.sidebar .nav-link.active {
+  color: #f3f0f0;
+  background-color: var(--sidebar-active);
+}
+
+/* Ajustes para ícones e outros elementos */
+[data-bs-theme="light"] .navbar-dark {
+  background-color: #343a40 !important;
+}
+
+[data-bs-theme="light"] .navbar-dark .navbar-brand,
+[data-bs-theme="light"] .navbar-dark .navbar-toggler,
+[data-bs-theme="light"] .navbar-dark .nav-link {
+  color: #fff !important;
+}
+
+/* Cards e elementos de interface */
+.card {
+  border-color: var(--bs-border-color);
+}
+
+.card-header {
+  background-color: var(--bs-tertiary-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+/* Garantir cores de texto adaptáveis ao tema */
+body {
+  color: var(--bs-body-color);
+}
+
+/* Ajustes para tabelas */
+.table {
+  color: var(--bs-body-color);
+  border-color: var(--bs-border-color);
+}
+
+/* Correção para ícones em tema claro */
+[data-bs-theme="light"] .fas, 
+[data-bs-theme="light"] .far, 
+[data-bs-theme="light"] .fa {
+  color: inherit;
+}
+
+/* Garantir contraste de texto nos formulários */
+.form-label {
+  color: var(--bs-body-color);
+}
+
+.form-text {
+  color: var(--bs-secondary-color);
+}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas de Estoque - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Formulário de Criação de Alerta -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Configurar Alerta de Estoque</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('stock_alerts') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.item_id.id }}" class="form-label">Item</label>
+                        {{ form.item_id(class="form-select") }}
+                        {% for error in form.item_id.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.alert_threshold.id }}" class="form-label">Limite para Alerta (%)</label>
+                        <div class="input-group">
+                            {{ form.alert_threshold(class="form-control", type="number", min="1", max="200") }}
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">
+                            Percentual do estoque mínimo para ativar o alerta (ex: 50% significa alertar quando o estoque atingir 50% do mínimo)
+                        </div>
+                        {% for error in form.alert_threshold.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            {{ form.email_alert(class="form-check-input") }}
+                            <label class="form-check-label" for="{{ form.email_alert.id }}">
+                                Enviar alerta por e-mail
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            Requer configuração de e-mail nas <a href="{{ url_for('settings') }}">Configurações</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            {{ form.dashboard_alert(class="form-check-input") }}
+                            <label class="form-check-label" for="{{ form.dashboard_alert.id }}">
+                                Mostrar alerta no dashboard
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Alertas Existentes -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Alertas Configurados</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if alerts %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Limite (%)</th>
+                                <th>E-mail</th>
+                                <th>Dashboard</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in alerts %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('item_detail', item_id=alert.item.id) }}">{{ alert.item.name }}</a>
+                                    <div class="text-muted small">{{ alert.item.unit.symbol }}</div>
+                                </td>
+                                <td>{{ alert.threshold }}%</td>
+                                <td class="text-center">
+                                    {% if alert.email_alert %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if alert.dashboard_alert %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('delete_stock_alert', item_id=alert.item.id) }}" onsubmit="return confirm('Tem certeza que deseja remover este alerta?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <i class="fas fa-bell-slash fa-3x mb-3 text-muted"></i>
+                    <p>Nenhum alerta configurado</p>
+                    <p class="text-muted">Configure alertas para ser notificado quando o estoque estiver baixo</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Explicação de Alertas -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Como Funcionam os Alertas</h5>
+            </div>
+            <div class="card-body">
+                <p>Os alertas de estoque são configurados por item e permitem definir:</p>
+                <ul>
+                    <li><strong>Limite de alerta:</strong> É o percentual do estoque mínimo que ativa o alerta.</li>
+                    <li><strong>Notificação por e-mail:</strong> Envia um e-mail quando o estoque atingir o limite.</li>
+                    <li><strong>Alerta no dashboard:</strong> Mostra um aviso visual no dashboard.</li>
+                </ul>
+                <p>Exemplo: Se um item tem estoque mínimo de 10kg e o limite de alerta é 50%, você receberá um alerta quando o estoque atingir 5kg.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

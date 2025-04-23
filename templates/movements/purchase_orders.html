@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos de Compra - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <a href="{{ url_for('new_purchase_order') }}" class="btn btn-primary me-2">
+        <i class="fas fa-plus me-1"></i>Novo Pedido
+    </a>
+    <a href="{{ url_for('auto_generate_po') }}" class="btn btn-success">
+        <i class="fas fa-magic me-1"></i>Gerar Automaticamente
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Status Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Filtrar por Status:</h5>
+            <select class="form-select w-auto" id="status-filter">
+                {% for status in statuses %}
+                <option value="{{ url_for('purchase_orders', status=status.value) }}" {% if status_filter == status.value %}selected{% endif %}>
+                    {{ status.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if purchase_orders %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Fornecedor</th>
+                        <th>Status</th>
+                        <th>Data de Criação</th>
+                        <th>Data de Envio</th>
+                        <th>Data de Recebimento</th>
+                        <th>Itens</th>
+                        <th>Valor Total</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for po in purchase_orders %}
+                    <tr>
+                        <td><a href="{{ url_for('purchase_order_detail', po_id=po.id) }}">{{ po.po_number }}</a></td>
+                        <td>{{ po.supplier }}</td>
+                        <td>
+                            <span class="po-status-{{ po.status }}">
+                                {{ {'draft': 'Rascunho', 'sent': 'Enviado', 'received': 'Recebido', 'cancelled': 'Cancelado'}[po.status] }}
+                            </span>
+                        </td>
+                        <td>{{ po.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ po.sent_at.strftime('%d/%m/%Y') if po.sent_at else '-' }}</td>
+                        <td>{{ po.received_at.strftime('%d/%m/%Y') if po.received_at else '-' }}</td>
+                        <td>{{ po.items|length }}</td>
+                        <td>R$ {{ "%.2f"|format(po.get_total_value()) }}</td>
+                        <td>
+                            <a href="{{ url_for('purchase_order_detail', po_id=po.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
+            <p class="text-muted">Nenhum pedido de compra encontrado.</p>
+            <div class="mt-3">
+                <a href="{{ url_for('new_purchase_order') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-plus me-1"></i>Criar Pedido
+                </a>
+                <a href="{{ url_for('auto_generate_po') }}" class="btn btn-success">
+                    <i class="fas fa-magic me-1"></i>Gerar Automaticamente
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Purchase Order Explanation -->
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Sobre Pedidos de Compra</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-info-circle me-2"></i>O que são Pedidos de Compra?</h6>
+                <p>Pedidos de compra são documentos formais enviados a fornecedores para solicitar a compra de itens. Eles ajudam a controlar e rastrear as solicitações de compra.</p>
+                
+                <h6><i class="fas fa-magic me-2"></i>Geração Automática</h6>
+                <p>O sistema pode gerar automaticamente pedidos de compra para itens que estão abaixo do estoque mínimo, facilitando o controle de reposição.</p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-sync-alt me-2"></i>Ciclo de Vida de um Pedido</h6>
+                <ul>
+                    <li><strong>Rascunho:</strong> Pedido criado, mas ainda não enviado ao fornecedor</li>
+                    <li><strong>Enviado:</strong> Pedido enviado ao fornecedor, aguardando entrega</li>
+                    <li><strong>Recebido:</strong> Itens recebidos e adicionados ao estoque</li>
+                    <li><strong>Cancelado:</strong> Pedido cancelado por algum motivo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

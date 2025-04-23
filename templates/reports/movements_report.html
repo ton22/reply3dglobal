@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Movimentações - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <button class="btn btn-secondary me-2 toggle-filters">
+        <i class="fas fa-filter me-1"></i>Filtros
+    </button>
+    <button class="btn btn-primary me-2 generate-pdf" data-report-type="movements" data-title="Relatório de Movimentações">
+        <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+    </button>
+    <a href="{{ url_for('export_movements_csv') }}{% if start_date %}?start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if selected_item %}&item_id={{ selected_item }}{% endif %}{% if selected_movement_type %}&movement_type_id={{ selected_movement_type }}{% endif %}" 
+       class="btn btn-success export-csv">
+        <i class="fas fa-file-csv me-1"></i>Exportar CSV
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Form -->
+<div class="card mb-4 filter-container {% if not start_date and not end_date and not selected_item and not selected_movement_type %}d-none{% endif %}">
+    <div class="card-body">
+        <form id="date-filter-form" method="GET" action="{{ url_for('movements_report') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Data Final</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="item_id" class="form-label">Item</label>
+                <select class="form-select" id="item_id" name="item_id">
+                    <option value="all">Todos os Itens</option>
+                    {% for item in items %}
+                    <option value="{{ item.id }}" {% if selected_item|string == item.id|string %}selected{% endif %}>
+                        {{ item.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="movement_type_id" class="form-label">Tipo de Movimentação</label>
+                <select class="form-select" id="movement_type_id" name="movement_type_id">
+                    <option value="all">Todos os Tipos</option>
+                    {% for type in movement_types %}
+                    <option value="{{ type.id }}" {% if selected_movement_type|string == type.id|string %}selected{% endif %}>
+                        {{ type.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="reset" class="btn btn-secondary me-2">Limpar</button>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Movements Summary -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Resumo do Período</h5>
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Período: 
+                    <strong>
+                        {% if start_date %}{{ start_date }}{% else %}Início{% endif %}
+                        a 
+                        {% if end_date %}{{ end_date }}{% else %}Hoje{% endif %}
+                    </strong>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ movements|length }}</h3>
+                                <p class="mb-0">Total de Movimentações</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ movements|map(attribute='item_id')|unique|list|length }}</h3>
+                                <p class="mb-0">Itens Diferentes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Movimentações por Tipo</h5>
+                <div class="chart-container">
+                    <canvas id="movements-by-type-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Movements Table -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Movimentações</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if movements %}
+        <div class="table-responsive">
+            <table class="table table-hover report-table-movements mb-0">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Item</th>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                        <th>Origem</th>
+                        <th>Destino</th>
+                        <th>Projeto</th>
+                        <th>Referência</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movement in movements %}
+                    <tr>
+                        <td>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ movement.item.name }}</td>
+                        <td>
+                            <span class="
+                                {% if 'entrada' in movement.movement_type.name.lower() %}movement-entry
+                                {% elif 'saída' in movement.movement_type.name.lower() %}movement-exit
+                                {% elif 'transfer' in movement.movement_type.name.lower() %}movement-transfer
+                                {% elif 'recicl' in movement.movement_type.name.lower() %}movement-recycle
+                                {% elif 'perda' in movement.movement_type.name.lower() %}movement-loss
+                                {% endif %}
+                            ">
+                                {{ movement.movement_type.name }}
+                            </span>
+                        </td>
+                        <td>{{ movement.quantity }} {{ movement.item.unit.symbol }}</td>
+                        <td>{{ movement.source_substock.name if movement.source_substock else '-' }}</td>
+                        <td>{{ movement.destination_substock.name if movement.destination_substock else '-' }}</td>
+                        <td>{{ movement.project.name if movement.project else '-' }}</td>
+                        <td>{{ movement.reference_code or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-exchange-alt fa-3x mb-3 text-muted"></i>
+            <p class="text-muted">Nenhuma movimentação encontrada com os filtros selecionados.</p>
+            <button class="btn btn-secondary toggle-filters">
+                <i class="fas fa-filter me-1"></i>Ajustar Filtros
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Movement Types Chart
+        const ctx = document.getElementById('movements-by-type-chart').getContext('2d');
+        
+        // Count movements by type
+        const movementTypes = {};
+        const typeColors = {};
+        let colorIndex = 0;
+        const colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#8C9EFF', '#AED581', '#FFD54F', '#4DD0E1'
+        ];
+        
+        {% for movement in movements %}
+        const typeName = '{{ movement.movement_type.name }}';
+        movementTypes[typeName] = (movementTypes[typeName] || 0) + 1;
+        
+        if (!typeColors[typeName]) {
+            typeColors[typeName] = colors[colorIndex % colors.length];
+            colorIndex++;
+        }
+        {% endfor %}
+        
+        const typeLabels = Object.keys(movementTypes);
+        const typeCounts = typeLabels.map(label => movementTypes[label]);
+        const typeBackgroundColors = typeLabels.map(label => typeColors[label]);
+        
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    data: typeCounts,
+                    backgroundColor: typeBackgroundColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+        
+        // Form reset - handle the redirect
+        document.querySelector('form button[type="reset"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '{{ url_for("movements_report") }}';
+        });
+    });
+</script>
+{% endblock %}

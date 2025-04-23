@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    {% if item %}
+                    <i class="fas fa-edit me-2"></i>Editar Item
+                    {% else %}
+                    <i class="fas fa-plus me-2"></i>Novo Item
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_item', item_id=item.id) if item else url_for('new_item') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.brand_id.label(class="form-label") }}
+                            {{ form.brand_id(class="form-select") }}
+                            {% if form.brand_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.brand_id.errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.item_type_id.label(class="form-label") }}
+                            {{ form.item_type_id(class="form-select") }}
+                            {% if form.item_type_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.item_type_id.errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <!-- <div class="col-md-6">
+                            {{ form.unit_id.label(class="form-label") }}
+                            {{ form.unit_id(class="form-select") }}
+                            {% if form.unit_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.unit_id.errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div> -->
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.sku.id }}" class="form-label">{{ form.sku.label }}</label>
+                        {{ form.sku(class="form-control") }}
+                        <div class="form-text">Se não preenchido, um SKU de 4 caracteres será gerado automaticamente</div>
+                        {% for error in form.sku.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.barcode.id }}" class="form-label">{{ form.barcode.label }}</label>
+                        {{ form.barcode(class="form-control") }}
+                        <div class="form-text">Se não preenchido, um código de barras único será gerado automaticamente</div>
+                        {% for error in form.barcode.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6"> 
+                            {{ form.unit_id.label(class="form-label") }}
+                            {{ form.unit_id(class="form-select") }}
+                            {% if form.unit_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.unit_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div> 
+                        
+                        <div class="col-md-6">
+                            {{ form.color.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.color(class="form-control", type="text") }}
+                                <input type="color" class="form-control form-control-color" id="colorPicker" 
+                                       onchange="document.getElementById('color').value = this.value">
+                            </div>
+                            {% if form.color.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.color.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.minimum_stock.label(class="form-label") }}
+                        <div class="input-group">
+                            {{ form.minimum_stock(class="form-control") }}
+                            <span class="input-group-text">{{ item.unit.symbol if item else 'un' }}</span>
+                        </div>
+                        <div class="form-text">Quantidade mínima para alerta de estoque baixo</div>
+                        {% for error in form.minimum_stock.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="4") }}
+                        {% for error in form.description.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ url_for('items') }}" class="btn btn-secondary me-2">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- JsBarcode for barcode preview -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+<script>
+    // Initialize color picker with current value
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorInput = document.getElementById('color');
+        const colorPicker = document.getElementById('colorPicker');
+        
+        if (colorInput && colorPicker && colorInput.value) {
+            colorPicker.value = colorInput.value;
+        }
+        
+        // Preview barcode if value exists
+        if (document.getElementById('barcode').value) {
+            previewBarcode();
+        }
+    });
+    
+    // Function to preview barcode
+    function previewBarcode() {
+        const barcodeInput = document.getElementById('barcode');
+        const previewContainer = document.getElementById('barcode-preview');
+        
+        if (barcodeInput && previewContainer && barcodeInput.value.trim() !== '') {
+            try {
+                JsBarcode("#barcode-image", barcodeInput.value, {
+                    format: "CODE128",
+                    displayValue: true,
+                    fontSize: 14,
+                    height: 60,
+                    margin: 10
+                });
+                
+                previewContainer.classList.remove('d-none');
+            } catch (e) {
+                console.error("Barcode generation error:", e);
+                previewContainer.classList.add('d-none');
+                alert("Erro ao gerar código de barras: " + e.message);
+            }
+        }
+    }
+</script>
+{% endblock %}

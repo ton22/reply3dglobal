@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Configurações Gerais -->
+    <div class="col-lg-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configurações do Sistema</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('settings') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">Informações Básicas</h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.company_name.id }}" class="form-label">Nome da Empresa</label>
+                            {{ form.company_name(class="form-control") }}
+                            {% for error in form.company_name.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.default_substock_id.id }}" class="form-label">Sub-estoque Padrão</label>
+                            {{ form.default_substock_id(class="form-select") }}
+                            <div class="form-text">
+                                Substock padrão para entradas de estoque
+                            </div>
+                            {% for error in form.default_substock_id.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.po_prefix.id }}" class="form-label">Prefixo de Pedido de Compra</label>
+                            {{ form.po_prefix(class="form-control") }}
+                            <div class="form-text">
+                                Ex: "PO-" resultará em pedidos numerados como "PO-001", "PO-002", etc.
+                            </div>
+                            {% for error in form.po_prefix.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">Aparência</h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.theme.id }}" class="form-label">Tema do Sistema</label>
+                            {{ form.theme(class="form-select") }}
+                            <div class="form-text">
+                                Selecione o tema de cores para a interface
+                            </div>
+                            {% for error in form.theme.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch mt-4">
+                                {{ form.low_stock_alert(class="form-check-input") }}
+                                <label class="form-check-label" for="{{ form.low_stock_alert.id }}">
+                                    Mostrar alertas de estoque baixo no dashboard
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">Notificações</h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.email_notifications(class="form-check-input") }}
+                                <label class="form-check-label" for="{{ form.email_notifications.id }}">
+                                    Ativar notificações por e-mail
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Receba alertas de estoque baixo e atualizações por e-mail
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email_address.id }}" class="form-label">E-mail para notificações</label>
+                            {{ form.email_address(class="form-control") }}
+                            {% for error in form.email_address.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações do Sistema -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informações do Sistema</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Total de Itens:</strong> {{ Item.query.count() }}</p>
+                        <p><strong>Total de Sub-estoques:</strong> {{ SubStock.query.count() }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Usuários Registrados:</strong> {{ User.query.count() }}</p>
+                        <p><strong>Versão do Sistema:</strong> 1.0.0</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-sync me-2"></i>
+                    <strong>Dica:</strong> Para aplicar o tema selecionado, você precisará fazer logout e login novamente.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Validação de formulário do lado do cliente
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailNotifications = document.getElementById('email_notifications');
+        const emailAddress = document.getElementById('email_address');
+        
+        // Desabilitar/habilitar campo de e-mail com base no checkbox
+        function toggleEmailField() {
+            if (emailNotifications.checked) {
+                emailAddress.removeAttribute('disabled');
+            } else {
+                emailAddress.setAttribute('disabled', 'disabled');
+            }
+        }
+        
+        // Configurar inicialmente
+        toggleEmailField();
+        
+        // Adicionar event listener
+        emailNotifications.addEventListener('change', toggleEmailField);
+        
+        // Tema claro/escuro
+        const themeSelect = document.getElementById('theme');
+        if (themeSelect) {
+            themeSelect.addEventListener('change', function() {
+                const newTheme = this.value;
+                // Atualizar o atributo data-bs-theme do elemento html
+                document.documentElement.setAttribute('data-bs-theme', newTheme);
+                
+                // Opcional: recarregar a página para aplicar todas as mudanças de tema
+                // setTimeout(() => location.reload(), 300);
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+.qodo
+CODIGOS
+
+# Ambiente virtual
+venv/
+__pycache__/
+*.log
+*.tmp
+
+# Dependências
+node_modules/
+dist/
+build/
+
+# Configurações locais
+.env
+
+# Outros
+
+/migrations/
+/Lib/
+/Scripts/
+/instance/

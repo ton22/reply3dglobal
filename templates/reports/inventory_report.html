@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Estoque - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <button class="btn btn-primary me-2 generate-pdf" data-report-type="inventory" data-title="Relatório de Estoque">
+        <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+    </button>
+    <a href="{{ url_for('export_inventory_csv') }}" class="btn btn-success export-csv" data-url="{{ url_for('export_inventory_csv') }}">
+        <i class="fas fa-file-csv me-1"></i>Exportar CSV
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Resumo</h5>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ data|length }}</h3>
+                                <p class="mb-0">Total de Itens</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ data|selectattr('below_minimum')|list|length }}</h3>
+                                <p class="mb-0">Abaixo do Mínimo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Distribuição por Sub-estoque</h5>
+                <div class="chart-container">
+                    <canvas id="inventory-distribution-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Inventário Completo</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover report-table-inventory mb-0">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>SKU</th>
+                        <th>Tipo</th>
+                        <th>Unidade</th>
+                        <th>Estoque Mínimo</th>
+                        {% for substock in substocks %}
+                        <th>{{ substock.name }}</th>
+                        {% endfor %}
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                    <tr class="{% if item.below_minimum %}table-danger{% endif %}">
+                        <td><a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.name }}</a></td>
+                        <td>{{ item.sku or '-' }}</td>
+                        <td>{{ item.type }}</td>
+                        <td>{{ item.unit }}</td>
+                        <td>{{ item.minimum_stock }} {{ item.unit }}</td>
+                        {% for substock in substocks %}
+                        <td>{{ item.substocks.get(substock.id, 0) }} {{ item.unit }}</td>
+                        {% endfor %}
+                        <td><strong>{{ item.total_quantity }} {{ item.unit }}</strong></td>
+                        <td>
+                            {% if item.below_minimum %}
+                            <span class="badge bg-danger">Abaixo do Mínimo</span>
+                            {% else %}
+                            <span class="badge bg-success">OK</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the distribution chart
+        const ctx = document.getElementById('inventory-distribution-chart').getContext('2d');
+        
+        // Extract data for the chart
+        const substockNames = [{% for substock in substocks %}'{{ substock.name }}',{% endfor %}];
+        const substockTotals = [];
+        
+        {% for substock in substocks %}
+        let total{{ substock.id }} = 0;
+        {% for item in data %}
+        total{{ substock.id }} += {{ item.substocks.get(substock.id, 0) }};
+        {% endfor %}
+        substockTotals.push(total{{ substock.id }});
+        {% endfor %}
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: substockNames,
+                datasets: [{
+                    data: substockTotals,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                        '#FF9F40', '#8C9EFF', '#AED581', '#FFD54F', '#4DD0E1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

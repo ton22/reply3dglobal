@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Pedido de Compra: {{ purchase_order.po_number }} - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    {% if purchase_order.status == 'draft' %}
+    <a href="{{ url_for('add_po_item', po_id=purchase_order.id) }}" class="btn btn-primary me-2">
+        <i class="fas fa-plus me-1"></i>Adicionar Item
+    </a>
+    <a href="{{ url_for('update_po_status', po_id=purchase_order.id, status='sent') }}" class="btn btn-success me-2">
+        <i class="fas fa-paper-plane me-1"></i>Marcar como Enviado
+    </a>
+    <a href="{{ url_for('update_po_status', po_id=purchase_order.id, status='cancelled') }}" class="btn btn-danger">
+        <i class="fas fa-times-circle me-1"></i>Cancelar
+    </a>
+    {% elif purchase_order.status == 'sent' %}
+    {% for item in purchase_order.items %}
+    <a href="{{ url_for('new_movement') }}?purchase_order_id={{ purchase_order.id }}&item_id={{ item.item_id }}" class="btn btn-success me-2">
+        <i class="fas fa-check-circle me-1"></i>Registrar Recebimento: {{ item.item.name }}
+    </a>
+    {% endfor %}
+    <a href="{{ url_for('update_po_status', po_id=purchase_order.id, status='cancelled') }}" class="btn btn-danger">
+        <i class="fas fa-times-circle me-1"></i>Cancelar
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Purchase Order Details -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Informações do Pedido</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Número:</div>
+                    <div class="col-md-8">{{ purchase_order.po_number }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Status:</div>
+                    <div class="col-md-8">
+                        <span class="po-status-{{ purchase_order.status }}">
+                            {{ {'draft': 'Rascunho', 'sent': 'Enviado', 'received': 'Recebido', 'cancelled': 'Cancelado'}[purchase_order.status] }}
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Fornecedor:</div>
+                    <div class="col-md-8">{{ purchase_order.supplier }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Criado em:</div>
+                    <div class="col-md-8">{{ purchase_order.created_at.strftime('%d/%m/%Y') }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Criado por:</div>
+                    <div class="col-md-8">{{ purchase_order.created_by.username }}</div>
+                </div>
+                {% if purchase_order.sent_at %}
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Enviado em:</div>
+                    <div class="col-md-8">{{ purchase_order.sent_at.strftime('%d/%m/%Y') }}</div>
+                </div>
+                {% endif %}
+                {% if purchase_order.received_at %}
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Recebido em:</div>
+                    <div class="col-md-8">{{ purchase_order.received_at.strftime('%d/%m/%Y') }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if purchase_order.notes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Observações</h5>
+            </div>
+            <div class="card-body">
+                {{ purchase_order.notes|nl2br }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Related Movements -->
+        {% if purchase_order.movements %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Movimentações Relacionadas</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for movement in purchase_order.movements %}
+                    <a href="{{ url_for('movement_detail', movement_id=movement.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ movement.item.name }}</h6>
+                            <small>{{ movement.created_at.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <p class="mb-1">{{ movement.quantity }} {{ movement.item.unit.symbol }}</p>
+                        <small>{{ movement.movement_type.name }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Items List -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+                <h5 class="mb-0">Itens do Pedido</h5>
+                {% if purchase_order.status == 'draft' %}
+                <a href="{{ url_for('add_po_item', po_id=purchase_order.id) }}" class="btn btn-light btn-sm">
+                    <i class="fas fa-plus me-1"></i>Adicionar Item
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                {% if purchase_order.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Tipo</th>
+                                <th>Quantidade</th>
+                                <th>Unidade</th>
+                                <th>Recebido</th>
+                                <th>Status</th>
+                                {% if purchase_order.status == 'draft' %}
+                                <th>Ações</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for po_item in purchase_order.items %}
+                            <tr>
+                                <td><a href="{{ url_for('item_detail', item_id=po_item.item.id) }}">{{ po_item.item.name }}</a></td>
+                                <td>{{ po_item.item.item_type.name }}</td>
+                                <td>{{ po_item.quantity }}</td>
+                                <td>{{ po_item.item.unit.symbol }}</td>
+                                <td>{{ po_item.received_quantity }}</td>
+                                <td>
+                                    {% if po_item.received_quantity >= po_item.quantity %}
+                                    <span class="badge bg-success">Completo</span>
+                                    {% elif po_item.received_quantity > 0 %}
+                                    <span class="badge bg-warning">Parcial</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pendente</span>
+                                    {% endif %}
+                                </td>
+                                {% if purchase_order.status == 'draft' %}
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('edit_po_item', po_id=purchase_order.id, item_id=po_item.item.id) }}" class="btn btn-sm btn-primary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('remove_po_item', po_id=purchase_order.id, item_id=po_item.item.id) }}" class="btn btn-sm btn-danger" title="Remover"
+                                           onclick="return confirm('Tem certeza que deseja remover este item do pedido?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <th colspan="2">Total</th>
+                                <th>{{ purchase_order.items|sum(attribute='quantity') }}</th>
+                                <th></th>
+                                <th>{{ purchase_order.items|sum(attribute='received_quantity') }}</th>
+                                <th colspan="{% if purchase_order.status == 'draft' %}2{% else %}1{% endif %}">
+                                    {% set progress = (purchase_order.items|sum(attribute='received_quantity') / purchase_order.items|sum(attribute='quantity') * 100)|round if purchase_order.items|sum(attribute='quantity') > 0 else 0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar {% if progress == 100 %}bg-success{% elif progress > 0 %}bg-warning{% else %}bg-secondary{% endif %}"
+                                             role="progressbar" style="width: {{ progress }}%"
+                                             aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ progress }}%
+                                        </div>
+                                    </div>
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-shopping-basket fa-3x mb-3 text-muted"></i>
+                    <p class="text-muted">Nenhum item adicionado a este pedido.</p>
+                    {% if purchase_order.status == 'draft' %}
+                    <a href="{{ url_for('add_po_item', po_id=purchase_order.id) }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus me-1"></i>Adicionar Item
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Print or Export Options -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Exportar / Imprimir</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i>Imprimir
+                    </button>
+                    <button class="btn btn-success" id="export-pdf">
+                        <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+                    </button>
+                    <button class="btn btn-info" id="export-csv">
+                        <i class="fas fa-file-csv me-1"></i>Exportar CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // PDF export functionality using jsPDF
+        document.getElementById('export-pdf').addEventListener('click', function() {
+            const doc = new jspdf.jsPDF();
+            
+            // Add header
+            doc.setFontSize(16);
+            doc.text('Pedido de Compra: {{ purchase_order.po_number }}', 14, 15);
+            
+            // Add details
+            doc.setFontSize(10);
+            doc.text(`Fornecedor: {{ purchase_order.supplier }}`, 14, 25);
+            doc.text(`Status: {{ {'draft': 'Rascunho', 'sent': 'Enviado', 'received': 'Recebido', 'cancelled': 'Cancelado'}[purchase_order.status] }}`, 14, 30);
+            doc.text(`Data: {{ purchase_order.created_at.strftime('%d/%m/%Y') }}`, 14, 35);
+            
+            // Add items table
+            const tableColumn = ["Item", "Quantidade", "Unidade", "Recebido"];
+            const tableRows = [];
+            
+            {% for po_item in purchase_order.items %}
+            tableRows.push([
+                "{{ po_item.item.name }}",
+                "{{ po_item.quantity }}",
+                "{{ po_item.item.unit.symbol }}",
+                "{{ po_item.received_quantity }}"
+            ]);
+            {% endfor %}
+            
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 45,
+                theme: 'grid',
+                headStyles: { fillColor: [59, 89, 152] }
+            });
+            
+            // Add notes if any
+            {% if purchase_order.notes %}
+            const finalY = doc.lastAutoTable.finalY || 45;
+            doc.setFontSize(12);
+            doc.text('Observações:', 14, finalY + 10);
+            doc.setFontSize(10);
+            doc.text('{{ purchase_order.notes|replace("\n", " ") }}', 14, finalY + 20);
+            {% endif %}
+            
+            // Save the PDF
+            doc.save('pedido_{{ purchase_order.po_number }}.pdf');
+        });
+    });
+</script>
+{% endblock %}

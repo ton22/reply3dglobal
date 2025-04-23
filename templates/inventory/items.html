@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Itens de Estoque - 3D Global Store{% endblock %}
+
+<!-- {% block page_actions %}
+<div>
+    <a href="{{ url_for('new_item') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Novo Item
+    </a>
+</div>
+{% endblock %} -->
+
+{% block content %}
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('items') }}" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    {{ form.search(class="form-control", placeholder="Buscar por nome ou SKU") }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                    <select class="form-select" name="item_type" id="item_type">
+                        <option value="">Todos os tipos</option>
+                        {% for type in item_types %}
+                        <option value="{{ type.id }}" {% if form.item_type.data == type.id %}selected{% endif %}>
+                            {{ type.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Items Table -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if items %}
+        <div class="table-responsive">
+            <table class="table table-hover inventory-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>
+                            <a href="#" class="text-white text-decoration-none sort-link" data-sort="name">
+                                Nome
+                                {% if sort_by == 'name' %}
+                                <i class="fas fa-sort-{{ 'down' if sort_order == 'asc' else 'up' }}"></i>
+                                {% else %}
+                                <i class="fas fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Marca</th>
+                        <th>SKU</th>
+                        <th>Unidade</th>
+                        <th>Cor</th>
+                        <th>Estoque Mínimo</th>
+                        <th>Estoque Atual</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    {% set total_stock = item.get_total_stock() %}
+                    {% set is_below_threshold = item.is_below_alert_threshold() %}
+                    <tr class="item-row" onclick="window.location='{{ url_for('item_detail', item_id=item.id) }}'">
+                        <td>{{ item.item_type.name }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.brand.name if item.brand else '-' }}</td>
+                        <td>{{ item.sku or '-' }}</td>
+                        <td>{{ item.unit.symbol }}</td>
+                        <td>{{ item.color or '-' }}</td>
+                        <td>{{ "%.2f"|format(item.minimum_stock) }} {{ item.unit.symbol }}</td>
+                        <td>{{ "%.2f"|format(total_stock) }} {{ item.unit.symbol }}</td>
+                        <td>
+                            {% if is_below_threshold %}
+                            <span class="badge bg-danger">Abaixo do Limite</span>
+                            {% else %}
+                            <span class="badge bg-success">OK</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <i class="fas fa-box-open fa-3x mb-3 text-muted"></i>
+            <p class="text-muted">Nenhum item encontrado.</p>
+            <a href="{{ url_for('new_item') }}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-1"></i>Adicionar Item
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

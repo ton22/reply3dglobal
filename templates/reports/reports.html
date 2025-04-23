@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios - 3D Global Store{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Relatório de Estoque</h5>
+            </div>
+            <div class="card-body">
+                <p>Visão completa de todos os itens no estoque, suas quantidades e distribuição por sub-estoques.</p>
+                <div class="chart-container">
+                    <canvas id="inventory-value-chart" data-chart-type="doughnut" data-title="Distribuição por Sub-estoque"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('inventory_report') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-chart-pie me-1"></i>Ver Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Relatório de Movimentações</h5>
+            </div>
+            <div class="card-body">
+                <p>Histórico de todas as movimentações de estoque, filtradas por período, item ou tipo de movimentação.</p>
+                <div class="chart-container">
+                    <canvas id="movements-by-type-chart" data-chart-type="pie" data-title="Movimentações por Tipo"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('movements_report') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-chart-line me-1"></i>Ver Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Relatório de Projetos</h5>
+            </div>
+            <div class="card-body">
+                <p>Análise de projetos, incluindo consumo de materiais, status e períodos.</p>
+                <div class="chart-container">
+                    <canvas id="projects-by-status-chart" data-chart-type="doughnut" data-title="Projetos por Status"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('projects_report') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-chart-bar me-1"></i>Ver Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Relatório de Pedidos de Compra</h5>
+            </div>
+            <div class="card-body">
+                <p>Acompanhamento de pedidos de compra, incluindo status, prazos e recebimentos.</p>
+                <ul class="list-group list-group-flush mt-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Rascunho
+                        <span class="badge bg-secondary rounded-pill">{{ PurchaseOrder.query.filter_by(status='draft').count() }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Enviados
+                        <span class="badge bg-primary rounded-pill">{{ PurchaseOrder.query.filter_by(status='sent').count() }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Recebidos
+                        <span class="badge bg-success rounded-pill">{{ PurchaseOrder.query.filter_by(status='received').count() }}</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('purchase_orders_report') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-file-invoice me-1"></i>Ver Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 low-stock-alert">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Relatório de Estoque Baixo</h5>
+            </div>
+            <div class="card-body">
+                <p>Lista de itens com estoque abaixo do mínimo, que precisam de reposição.</p>
+                <div class="text-center my-4">
+                    <div class="display-4 {% if low_stock_items|length > 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ low_stock_items|length }}
+                    </div>
+                    <div class="mt-2">itens abaixo do estoque mínimo</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('low_stock_report') }}" class="btn btn-danger flex-grow-1">
+                        <i class="fas fa-list me-1"></i>Ver Relatório
+                    </a>
+                    <a href="{{ url_for('auto_generate_po') }}" class="btn btn-success flex-grow-1">
+                        <i class="fas fa-shopping-cart me-1"></i>Gerar Pedido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-export me-2"></i>Exportar Dados</h5>
+            </div>
+            <div class="card-body">
+                <p>Exporte seus dados para formatos como CSV ou PDF para uso em outras ferramentas ou para arquivamento.</p>
+                <div class="list-group mt-3">
+                    <a href="{{ url_for('export_inventory_csv') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Exportar Estoque 
+                        <i class="fas fa-file-csv"></i>
+                    </a>
+                    <a href="{{ url_for('export_movements_csv') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Exportar Movimentações 
+                        <i class="fas fa-file-csv"></i>
+                    </a>
+                    <a href="{{ url_for('export_low_stock_csv') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Exportar Estoque Baixo 
+                        <i class="fas fa-file-csv"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-primary w-100" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i>Imprimir Relatório Atual
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

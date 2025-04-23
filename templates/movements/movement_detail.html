@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Movimentação #{{ movement.id }} - 3D Global Store{% endblock %}
+
+{% block page_actions %}
+<div>
+    <a href="{{ url_for('movements') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Voltar
+    </a>
+    <a href="{{ url_for('new_movement') }}?item_id={{ movement.item_id }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Nova Movimentação
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Movement Details -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Detalhes da Movimentação</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">ID:</div>
+                    <div class="col-md-8">{{ movement.id }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Data e Hora:</div>
+                    <div class="col-md-8">{{ movement.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Tipo:</div>
+                    <div class="col-md-8">
+                        <span class="
+                            {% if 'entrada' in movement.movement_type.name.lower() %}movement-entry
+                            {% elif 'saída' in movement.movement_type.name.lower() %}movement-exit
+                            {% elif 'transfer' in movement.movement_type.name.lower() %}movement-transfer
+                            {% elif 'recicl' in movement.movement_type.name.lower() %}movement-recycle
+                            {% elif 'perda' in movement.movement_type.name.lower() %}movement-loss
+                            {% endif %}
+                        ">
+                            {{ movement.movement_type.name }}
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Item:</div>
+                    <div class="col-md-8">
+                        <a href="{{ url_for('item_detail', item_id=movement.item.id) }}">
+                            {{ movement.item.name }}
+                        </a>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Quantidade:</div>
+                    <div class="col-md-8">{{ movement.quantity }} {{ movement.item.unit.symbol }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Origem:</div>
+                    <div class="col-md-8">
+                        {% if movement.source_substock %}
+                        <a href="{{ url_for('substock_detail', substock_id=movement.source_substock.id) }}">
+                            {{ movement.source_substock.name }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Destino:</div>
+                    <div class="col-md-8">
+                        {% if movement.destination_substock %}
+                        <a href="{{ url_for('substock_detail', substock_id=movement.destination_substock.id) }}">
+                            {{ movement.destination_substock.name }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if movement.reference_code %}
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Referência:</div>
+                    <div class="col-md-8">{{ movement.reference_code }}</div>
+                </div>
+                {% endif %}
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Registrado por:</div>
+                    <div class="col-md-8">{{ movement.created_by.username }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Associated Data -->
+    <div class="col-md-6">
+        {% if movement.project %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Projeto Associado</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Nome:</div>
+                    <div class="col-md-8">
+                        <a href="{{ url_for('project_detail', project_id=movement.project.id) }}">
+                            {{ movement.project.name }}
+                        </a>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Status:</div>
+                    <div class="col-md-8">
+                        <span class="status-badge status-{{ movement.project.status }}">
+                            {{ {'active': 'Ativo', 'completed': 'Concluído', 'cancelled': 'Cancelado'}[movement.project.status] }}
+                        </span>
+                    </div>
+                </div>
+                {% if movement.project.client_name %}
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Cliente:</div>
+                    <div class="col-md-8">{{ movement.project.client_name }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if movement.purchase_order %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Pedido de Compra Associado</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Número:</div>
+                    <div class="col-md-8">
+                        <a href="{{ url_for('purchase_order_detail', po_id=movement.purchase_order.id) }}">
+                            {{ movement.purchase_order.po_number }}
+                        </a>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Status:</div>
+                    <div class="col-md-8">
+                        <span class="po-status-{{ movement.purchase_order.status }}">
+                            {{ {'draft': 'Rascunho', 'sent': 'Enviado', 'received': 'Recebido', 'cancelled': 'Cancelado'}[movement.purchase_order.status] }}
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Fornecedor:</div>
+                    <div class="col-md-8">{{ movement.purchase_order.supplier }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if movement.notes %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Observações</h5>
+            </div>
+            <div class="card-body">
+                {{ movement.notes|nl2br }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
