@@ -21,3 +21,4 @@ build/
 /Lib/
 /Scripts/
 /instance/
+update_docs.py

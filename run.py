@@ -10,7 +10,7 @@ def run_flask():
     with app.app_context():
         db.create_all()
         initialize_all()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
 
 def run_gunicorn():
     """Inicia o aplicativo usando Gunicorn"""
@@ -36,7 +36,7 @@ def run_gunicorn():
         initialize_all()
 
     options = {
-        'bind': '127.0.0.1:5000',
+        'bind': '127.0.0.1:5001',
         'workers': 4,
         'worker_class': 'sync',
         'timeout': 120,

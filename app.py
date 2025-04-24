@@ -127,6 +127,6 @@ with app.app_context():
     initialize_all()
         
     if DEBUG:
-        app.run(host="0.0.0.0", port=5000, debug=True)
+        app.run(host="0.0.0.0", port=5001, debug=True)
     else:
-        app.run(host="0.0.0.0", port=5000)
+        app.run(host="0.0.0.0", port=5001)

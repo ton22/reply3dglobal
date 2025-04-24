@@ -1,5 +1,5 @@
 # Configurações do Gunicorn para desenvolvimento local
-bind = "127.0.0.1:5000"  # Endereço e porta
+bind = "127.0.0.1:5001"  # Endereço e porta
 workers = 4  # Número de workers
 worker_class = "sync"  # Tipo de worker
 timeout = 120  # Tempo máximo de resposta
