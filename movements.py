@@ -33,6 +33,19 @@ def movements():
     
     return render_template('movements/movements.html', **context)
 
+
+@app.route('/api/items/<int:item_id>')
+@login_required
+def get_item_details(item_id):
+    item = Item.query.get_or_404(item_id)
+    return jsonify({
+        'id': item.id,
+        'name': item.name,
+        'sku': item.sku,
+        'color': item.color,
+        'brand': {'id': item.brand.id, 'name': item.brand.name} if item.brand else None
+    })
+
 @app.route('/movements/new', methods=['GET', 'POST'])
 @login_required
 def new_movement():
@@ -52,11 +65,11 @@ def new_movement():
     form.item_id.render_kw = None
     form.purchase_order_id.render_kw = None
     form.destination_substock_id.render_kw = None
-
+    flash('push 1', 'danger')
     # Verificar se veio de um pedido de compra
     purchase_order_id = request.args.get('purchase_order_id')
     item_id = request.args.get('item_id')
-    
+    flash('push2', 'danger')
     if purchase_order_id and item_id:
         
         # Preencher o formulário com as informações do pedido
@@ -180,6 +193,7 @@ def new_movement():
                             break
                     
                     if all_received:
+                        flash('entrou em receiv', 'danger')
                         purchase_order.status = 'received'
                         purchase_order.received_at = datetime.utcnow()
                         db.session.add(purchase_order)
@@ -267,20 +281,22 @@ def new_movement():
                         # Atualizar a quantidade recebida do item
                         po_item.received_quantity += form.quantity.data
                         db.session.add(po_item)
-                        
+                        flash('chgou em push2', 'danger')
                         # Atualizar o status do pedido
                         update_purchase_order_status(purchase_order.id)
             
             db.session.commit()
             
-            # Redirecionar para a página de pedidos de compra
-            return redirect(url_for('purchase_orders'))
-            
+            # Exibir uma mensagem de sucesso e permanecer na mesma página.
+            flash('Movimentação criada com sucesso.', 'success')
+            return render_template('movements/movement_form.html', form=form)
+                    
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao criar movimentação: {str(e)}', 'danger')
             return render_template('movements/movement_form.html', form=form)
     else:
+        flash('chegou ao final', 'danger')
         return render_template('movements/movement_form.html', form=form)
 @app.route('/movements/<int:movement_id>')
 @login_required

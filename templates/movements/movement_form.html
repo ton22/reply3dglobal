@@ -8,7 +8,7 @@
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-exchange-alt me-2"></i>Nova Movimentação
+                    <i class="fas fa-exchange-alt me-2"></i>Nova Movimentação aqui
                 </h5>
             </div>
             <div class="card-body">
@@ -25,7 +25,26 @@
                                         {{ error }}
                                     {% endfor %}
                                 </div>
-                            {% endif %}
+                            {% endif %}                            
+                            <!-- Detalhes do Item -->
+                            <div id="itemDetails" class="mt-2 p-2 border rounded " style="display: none;">
+                                <h6 class="mb-2">Detalhes do Item</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>SKU:</strong> <span id="itemSku">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Marca:</strong> <span id="itemBrand">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Cor:</strong> 
+                                        <div class="d-flex align-items-center">
+                                            <div id="itemColorBox" style="width: 10px; height: 20px; border-radius: 4px; margin-right: 6px;"></div>
+                                            <span id="itemColor">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             {{ form.movement_type_id.label(class="form-label") }}
@@ -324,6 +343,48 @@
         
         // Initial update
         updateFields();
+
+        // Função para carregar detalhes do item
+        async function loadItemDetails(itemId) {
+            console.log('Carregando detalhes do item:', itemId);
+            if (!itemId) {
+                console.log('Nenhum item selecionado');
+                document.getElementById('itemDetails').style.display = 'none';
+                return;
+            }
+
+            try {
+                console.log('Fazendo requisição para:', `/api/items/${itemId}`);
+                const response = await fetch(`/api/items/${itemId}`);
+                console.log('Status da resposta:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const item = await response.json();
+                console.log('Dados recebidos:', item);
+                
+                document.getElementById('itemDetails').style.display = 'block';
+                document.getElementById('itemSku').textContent = item.sku || '-';
+                document.getElementById('itemBrand').textContent = item.brand?.name || '-';
+                document.getElementById('itemColor').textContent = item.color || '-';
+                
+                if (item.color) {
+                    document.getElementById('itemColorBox').style.backgroundColor = item.color;
+                    document.getElementById('itemColorBox').style.display = 'block';
+                } else {
+                    document.getElementById('itemColorBox').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar detalhes do item:', error);
+            }
+        }
+
+        // Carregar detalhes quando um item é selecionado
+        document.getElementById('item_id').addEventListener('change', function() {
+            loadItemDetails(this.value);
+        });
 
         // Verificar se veio de um pedido de compra e se foi bem-sucedido
         const purchaseOrderId = {% if form.purchase_order_id.data %}{{ form.purchase_order_id.data|tojson|safe }}{% else %}null{% endif %};
