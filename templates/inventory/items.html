@@ -82,7 +82,15 @@
                         <td>{{ item.brand.name if item.brand else '-' }}</td>
                         <td>{{ item.sku or '-' }}</td>
                         <td>{{ item.unit.symbol }}</td>
-                        <td>{{ item.color or '-' }}</td>
+                        <td>
+                            {% if item.color %}
+                            <div class="d-flex justify-content-center">
+                                <div class="color-box" style="width: 25px; height: 25px; border-radius: 4px; background-color: {{ item.color }}; border: 1px solid #dee2e6;"></div>
+                            </div>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
                         <td>{{ "%.2f"|format(item.minimum_stock) }} {{ item.unit.symbol }}</td>
                         <td>{{ "%.2f"|format(total_stock) }} {{ item.unit.symbol }}</td>
                         <td>
