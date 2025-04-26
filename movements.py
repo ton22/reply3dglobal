@@ -50,58 +50,72 @@ def get_item_details(item_id):
 @login_required
 def new_movement():
     form = MovementForm()
-    
+
     # Carregar todas as opções
     purchase_orders = PurchaseOrder.query.all()
     form.purchase_order_id.choices = [(0, 'Nenhum')] + [(po.id, po.po_number) for po in purchase_orders]
-    form.item_id.choices = [(i.id, i.name) for i in Item.query.order_by(Item.name).all()]
     form.movement_type_id.choices = [(t.id, t.name) for t in MovementType.query.all()]
     form.source_substock_id.choices = [(0, '-')] + [(s.id, s.name) for s in SubStock.query.all()]
     form.destination_substock_id.choices = [(0, '-')] + [(s.id, s.name) for s in SubStock.query.all()]
     form.project_id.choices = [(0, 'Nenhum')] + [(p.id, p.name) for p in Project.query.filter_by(status='active').all()]
 
-    # Limpar atributos readonly por padrão
-    form.movement_type_id.render_kw = None
-    form.item_id.render_kw = None
-    form.purchase_order_id.render_kw = None
-    form.destination_substock_id.render_kw = None
-    flash('push 1', 'danger')
     # Verificar se veio de um pedido de compra
     purchase_order_id = request.args.get('purchase_order_id')
     item_id = request.args.get('item_id')
-    flash('push2', 'danger')
-    if purchase_order_id and item_id:
-        
-        # Preencher o formulário com as informações do pedido
-        po_item = PurchaseOrderItem.query.filter_by(
-            purchase_order_id=purchase_order_id,
-            item_id=item_id
-        ).first()
-        
-        if po_item:
-            # Definir o tipo de movimento como Entrada
-            entry_type = MovementType.query.filter_by(name='Entrada').first()
-            if entry_type:
-                form.movement_type_id.data = entry_type.id
-                form.movement_type_id.render_kw = {'readonly': True}
+
+    if purchase_order_id and item_id and request.method == 'GET':
+        # Caso venha de um pedido de compra, carregar apenas o item específico
+        try:
+            purchase_order_id = int(purchase_order_id)
+            item_id = int(item_id)
+            item = Item.query.get(item_id)
+            if item:
+                form.item_id.choices = [(item.id, item.name)]
+            else:
+                form.item_id.choices = [(0, 'Selecione um item')] + [(i.id, i.name) for i in Item.query.order_by(Item.name).all()]
             
-            # Definir o item
-            form.item_id.data = item_id
-            form.item_id.render_kw = {'readonly': True}
+            # Preencher o formulário com as informações do pedido de compra
+            po_item = PurchaseOrderItem.query.filter_by(
+                purchase_order_id=purchase_order_id,
+                item_id=item_id
+            ).first()
             
-            # Definir a quantidade restante a receber
-            remaining_quantity = po_item.quantity - po_item.received_quantity
-            form.quantity.data = remaining_quantity
-            
-            # Definir o pedido de compra
-            form.purchase_order_id.data = int(purchase_order_id)
-            form.purchase_order_id.render_kw = {'readonly': True}
-            
-            # Definir o subestoque de destino como o subestoque padrão
-            default_substock = SubStock.query.filter_by(name='Padrão').first()
-            if default_substock:
-                form.destination_substock_id.data = default_substock.id
-                form.destination_substock_id.render_kw = {'readonly': True}
+            if po_item:
+                # Definir o tipo de movimento como Entrada
+                entry_type = MovementType.query.filter_by(name='Entrada').first()
+                if entry_type:
+                    form.movement_type_id.data = entry_type.id
+                    form.movement_type_id.render_kw = {'readonly': True}
+                
+                # Definir o item
+                form.item_id.data = item_id
+                form.item_id.render_kw = {'readonly': True}
+                
+                # Definir a quantidade restante a receber
+                remaining_quantity = po_item.quantity - po_item.received_quantity
+                form.quantity.data = remaining_quantity
+                
+                # Definir o pedido de compra
+                form.purchase_order_id.data = purchase_order_id
+                form.purchase_order_id.render_kw = {'readonly': True}
+                
+                # Definir o subestoque de destino como o subestoque padrão
+                default_substock = SubStock.query.filter_by(name='Padrão').first()
+                if default_substock:
+                    form.destination_substock_id.data = default_substock.id
+            else:
+                flash('Item ou pedido de compra não encontrado.', 'danger')
+        except ValueError:
+            flash('Parâmetros inválidos.', 'danger')
+    else:
+        # Caso seja uma movimentação normal, carregar todos os itens
+        form.item_id.choices = [(0, 'Selecione um item')] + [(i.id, i.name) for i in Item.query.order_by(Item.name).all()]
+        form.item_id.data = 0  # Definir como vazio por padrão
+        # Limpar atributos readonly
+        form.movement_type_id.render_kw = None
+        form.item_id.render_kw = None
+        form.purchase_order_id.render_kw = None
+        form.destination_substock_id.render_kw = None
 
     if form.validate_on_submit():
         # Verificar se o movimento já existe baseado nos dados fornecidos
