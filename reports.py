@@ -212,52 +212,130 @@ def low_stock_report():
     low_stock_items = []
     items = Item.query.all()
     
-    # Colors for the chart
-    colors = [
-        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-        '#FF9F40', '#8C9EFF', '#AED581', '#FFD54F', '#4DD0E1'
-    ]
-    
+    # Lists for chart data
     item_names = []
+    current_stocks = []
+    minimum_stocks = []
     stock_percentages = []
     
+    # Colors for charts
+    colors = [
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(140, 158, 255, 0.7)',
+        'rgba(174, 213, 129, 0.7)',
+        'rgba(255, 213, 79, 0.7)',
+        'rgba(77, 208, 225, 0.7)'
+    ]
+    
+    # Counters for statistics
+    total_items = 0
+    critical_items = 0
+    total_shortage = 0
+    
     for item in items:
-        total_stock = item.get_total_stock()  # Use the get_total_stock method from Item model
-        if item.is_below_alert_threshold():
+        if item.minimum_stock and item.minimum_stock > 0 and item.is_below_alert_threshold():
+            total_items += 1
+            total_stock = float(item.get_total_stock())
+            
             # Get alert threshold if configured
             key = f"stock_alert_{item.id}"
             alert_setting = Setting.query.filter_by(key=key).first()
-            threshold_percentage = 100  # Default to 100% if no setting
+            threshold_percentage = 100.0  # Default to 100% if no setting
             
             if alert_setting:
                 threshold, _, _ = alert_setting.value.split(',')
                 threshold_percentage = float(threshold)
             
             # Calculate stock percentage
-            stock_percentage = (total_stock / item.minimum_stock * 100) if item.minimum_stock > 0 else 0
+            stock_percentage = (total_stock / item.minimum_stock * 100)
+            if stock_percentage < 25:
+                critical_items += 1
+                
+            shortage = item.minimum_stock - total_stock
+            total_shortage += shortage
             
-            low_stock_items.append({
+            # Prepare item data
+            item_data = {
                 'id': item.id,
-                'name': item.name,
-                'sku': item.sku,
-                'type': item.item_type.name,
-                'unit': item.unit.symbol,
-                'minimum_stock': item.minimum_stock,
-                'current_stock': total_stock,
-                'shortage': item.minimum_stock - total_stock,
-                'alert_threshold': threshold_percentage
-            })
+                'name': str(item.name),
+                'sku': str(item.sku) if item.sku else '',
+                'type': str(item.item_type.name),
+                'unit': str(item.unit.symbol),
+                'minimum_stock': float(item.minimum_stock),
+                'current_stock': float(total_stock),
+                'shortage': float(shortage),
+                'alert_threshold': float(threshold_percentage),
+                'stock_percentage': round(float(stock_percentage), 2),
+                'status': 'Crítico' if stock_percentage < 25 else 'Baixo'
+            }
             
-            # Add data for the chart
-            item_names.append(item.name)
-            stock_percentages.append(stock_percentage)
+            low_stock_items.append(item_data)
+            
+            # Add data for charts
+            item_names.append(str(item.name))
+            current_stocks.append(float(total_stock))
+            minimum_stocks.append(float(item.minimum_stock))
+            stock_percentages.append(round(float(stock_percentage), 2))
     
+    # Statistics for dashboard cards
+    statistics = {
+        'total_items': int(total_items),
+        'critical_items': int(critical_items),
+        'total_shortage': float(total_shortage),
+        'critical_percentage': round(float((critical_items / total_items * 100) if total_items > 0 else 0), 2)
+    }
+    
+    # Chart data structures
+    bar_chart_data = {
+        'labels': item_names,
+        'datasets': [
+            {
+                'label': 'Estoque Atual',
+                'data': current_stocks,
+                'backgroundColor': 'rgba(54, 162, 235, 0.7)',
+                'borderColor': 'rgba(54, 162, 235, 1)',
+                'borderWidth': 1
+            },
+            {
+                'label': 'Estoque Mínimo',
+                'data': minimum_stocks,
+                'backgroundColor': 'rgba(255, 99, 132, 0.7)',
+                'borderColor': 'rgba(255, 99, 132, 1)',
+                'borderWidth': 1
+            }
+        ]
+    }
+    
+    percentage_chart_data = {
+        'labels': item_names,
+        'datasets': [{
+            'label': 'Porcentagem do Estoque Mínimo',
+            'data': stock_percentages,
+            'backgroundColor': colors[:len(item_names)],
+            'borderColor': [color.replace('0.7', '1') for color in colors[:len(item_names)]],
+            'borderWidth': 1
+        }]
+    }
+    
+    # Create context with all necessary data
     context = {
         'title': 'Relatório de Estoque Baixo',
         'low_stock_items': low_stock_items,
+        'statistics': statistics,
+        'colors': colors[:len(low_stock_items)],
+        # Chart data
         'item_names': item_names,
+        'current_stocks': current_stocks,
+        'minimum_stocks': minimum_stocks,
         'stock_percentages': stock_percentages,
-        'colors': colors[:len(low_stock_items)]  # Only use as many colors as we have items
+        # Pre-formatted chart data
+        'bar_chart_data': bar_chart_data,
+        'percentage_chart_data': percentage_chart_data
     }
     
     return render_template('reports/low_stock_report.html', **context)
@@ -525,38 +603,63 @@ def export_low_stock_pdf():
     low_stock_items = []
     items = Item.query.all()
     
+    # Counters for statistics
+    total_items = 0
+    critical_items = 0
+    total_shortage = 0
+    
     for item in items:
-        total_stock = item.get_total_stock()
-        if item.is_below_alert_threshold():
+        if item.minimum_stock and item.minimum_stock > 0 and item.is_below_alert_threshold():
+            total_items += 1
+            total_stock = float(item.get_total_stock())
+            
             # Get alert threshold if configured
             key = f"stock_alert_{item.id}"
             alert_setting = Setting.query.filter_by(key=key).first()
-            threshold_percentage = 100  # Default to 100% if no setting
+            threshold_percentage = 100.0  # Default to 100% if no setting
             
             if alert_setting:
                 threshold, _, _ = alert_setting.value.split(',')
                 threshold_percentage = float(threshold)
             
             # Calculate stock percentage
-            stock_percentage = (total_stock / item.minimum_stock * 100) if item.minimum_stock > 0 else 0
+            stock_percentage = (total_stock / item.minimum_stock * 100)
+            if stock_percentage < 25:
+                critical_items += 1
+                
+            shortage = item.minimum_stock - total_stock
+            total_shortage += shortage
             
-            low_stock_items.append({
+            # Prepare item data
+            item_data = {
                 'id': item.id,
-                'name': item.name,
-                'sku': item.sku,
-                'type': item.item_type.name,
-                'unit': item.unit.symbol,
-                'minimum_stock': item.minimum_stock,
-                'current_stock': total_stock,
-                'shortage': item.minimum_stock - total_stock,
-                'alert_threshold': threshold_percentage,
-                'stock_percentage': stock_percentage
-            })
+                'name': str(item.name),
+                'sku': str(item.sku) if item.sku else '',
+                'type': str(item.item_type.name),
+                'unit': str(item.unit.symbol),
+                'minimum_stock': float(item.minimum_stock),
+                'current_stock': float(total_stock),
+                'shortage': float(shortage),
+                'alert_threshold': float(threshold_percentage),
+                'stock_percentage': round(float(stock_percentage), 2),
+                'status': 'Crítico' if stock_percentage < 25 else 'Baixo'
+            }
+            
+            low_stock_items.append(item_data)
+    
+    # Statistics for dashboard cards
+    statistics = {
+        'total_items': int(total_items),
+        'critical_items': int(critical_items),
+        'total_shortage': float(total_shortage),
+        'critical_percentage': round(float((critical_items / total_items * 100) if total_items > 0 else 0), 2)
+    }
     
     # Render template with print-specific layout
     return render_template(
         'reports/low_stock_print.html',
         low_stock_items=low_stock_items,
+        statistics=statistics,
         generated_at=datetime.now().strftime('%d/%m/%Y %H:%M'),
         print_mode=True
     )
