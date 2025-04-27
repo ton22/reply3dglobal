@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from datetime import datetime
 from app import app, db
 from models import User
 from forms import LoginForm, RegisterForm, ProfileForm
@@ -32,13 +32,13 @@ def login():
         else:
             flash('Nome de usuário ou senha inválidos', 'danger')
     
-    return render_template('login.html', form=form, title='Login')
+    return render_template('login.html', form=form, year=datetime.now().year)
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Você saiu do sistema com sucesso', 'info')
+    # flash('Você saiu do sistema com sucesso', 'info')
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])

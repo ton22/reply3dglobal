@@ -1,62 +1,247 @@
+
 {% extends "base.html" %}
 
 {% block title %}Login - 3D Global Store{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row min-vh-100">
-        <div class="col-md-5 d-none d-md-flex align-items-center ps-5">
-            <img src="{{ url_for('static', filename='images/generated-icon.png') }}" alt="3D Global Store" class="img-fluid" style="max-height: 350px;">
+<style>
+    /* Reset e estilos base */
+    body {
+        padding-top: 0 !important;
+        margin: 0;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Container principal */
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: row;
+    }
+
+    /* Seção da marca */
+    .brand-section {
+        flex: 1;
+        background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .brand-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 400px;
+        padding: 2rem;
+    }
+
+    .brand-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.1;
+    }
+
+    /* Seção do formulário */
+    .form-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background-color: #ffffff;
+    }
+
+    .login-box {
+        width: 100%;
+        max-width: 400px;
+        padding: 2.5rem;
+    }
+
+    /* Estilos do cartão de login */
+    .login-card {
+        background-color: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+    }
+    .login-box {
+        color: #1a237e;        
+        --bs-body-color: #1879da;        
+        --bs-body-color-rgb: 173, 181, 189;
+        --bs-body-bg: none;
+        --bs-body-bg-rgb: 33, 37, 
+    }
+
+    .navbar-brand {
+        /* padding-top: var(--bs-navbar-brand-padding-y);
+        padding-bottom: var(--bs-navbar-brand-padding-y);
+        margin-right: var(--bs-navbar-brand-margin-end); */
+        margin-left: 2rem;
+        font-size: var(--bs-navbar-brand-font-size);
+        color: var(--bs-navbar-brand-color);
+        text-decoration:dashed;
+        white-space: nowrap;
+    }
+
+    .welcome-text {
+        color: #1a237e;
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Estilos dos campos de formulário */
+    .form-floating > .form-control {
+        border: 2px solid #e0e0e0;
+        background-color: #ffffff;
+    }
+
+    .form-floating > .form-control:focus {
+        border-color: #3949ab;
+        box-shadow: 0 0 0 0.25rem rgba(57, 73, 171, 0.25);
+    }
+
+    .form-floating > label {
+        color: #757575;
+    }
+
+    /* Estilo do botão */
+    .btn-login {
+        background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(57, 73, 171, 0.3);
+    }
+
+    /* Responsividade */
+    @media (max-width: 991.98px) {
+        .login-container {
+            flex-direction: column;
+        }
+
+        .brand-section {
+            min-height: 200px;
+        }
+
+        .brand-content {
+            padding: 1rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="login-container">
+    <!-- Seção da Marca -->
+    <div class="brand-section">
+        <div class="brand-content">
+            <img src="{{ url_for('static', filename='images/generated-icon.png') }}" 
+                 alt="3D Global Store" 
+                 class="img-fluid mb-4" 
+                 style="max-height: 140px;">
+            <h1 class="display-4 fw-bold text-white mb-3">3D Global Store</h1>
+            <p class="lead text-white-50">Sistema de Gestão de Estoque</p>
         </div>
-        <div class="col-md-4 d-flex align-items-center">
-            <div class="card shadow border-0 w-100">
-                <div class="card-header bg-primary text-white py-3">
-                    <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Login</h4>
+    </div>
+
+    <!-- Seção do Formulário -->
+    <div class="form-section">
+        <div class="login-box">
+            <!-- Logo mobile -->
+            <div class="text-center d-lg-none mb-5">
+                <img src="{{ url_for('static', filename='images/generated-icon.png') }}" 
+                     alt="3D Global Store" 
+                     class="img-fluid mb-3" 
+                     style="max-height: 80px;">
+                <h2 class="text-primary fw-bold">3D Global Store</h2>
+            </div>
+
+            <h3 class="welcome-text text-center fw-bold">Bem-vindo de volta!</h3>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-4">
+                    <div class="form-floating">
+                        {{ form.username(class="form-control", placeholder="Nome de usuário", id="username") }}
+                        {{ form.username.label(for="username") }}
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.username.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('login') }}">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control", placeholder="Digite seu nome de usuário") }}
-                            {% if form.username.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.username.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                
+                <div class="mb-4">
+                    <div class="form-floating">
+                        {{ form.password(class="form-control", placeholder="Senha", id="password") }}
+                        {{ form.password.label(for="password") }}
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.password.errors %}
+                                {{ error }}
+                            {% endfor %}
                         </div>
-                        
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control", placeholder="Digite sua senha") }}
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.password.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            {{ form.remember(class="form-check-input") }}
-                            {{ form.remember.label(class="form-check-label") }}
-                        </div>
-                        
-                        <div>
-                            {{ form.submit(class="btn btn-primary") }}
-                        </div>
-                    </form>
+                    {% endif %}
                 </div>
-                <div class="card-footer py-3">
-                    <p class="mb-0">
-                        Não tem uma conta? 
-                        <a href="{{ url_for('register') }}" class="text-decoration-none">Registre-se</a>
-                    </p>
+                
+                <div class="mb-4 form-check">
+                    {{ form.remember(class="form-check-input") }}
+                    {{ form.remember.label(class="form-check-label") }}
                 </div>
+                
+                {{ form.submit(class="btn btn-primary w-100 btn-login mb-4") }}
+            </form>
+
+            <div class="text-center">
+                <p class="text-muted mb-0">
+                    Não tem uma conta? 
+                    <a href="{{ url_for('register') }}" class="text-decoration-none fw-bold text-primary">Registre-se</a>
+                </p>
+            </div>
+
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    &copy; {{ year }} 3D Global Store. Todos os direitos reservados.
+                </small>
             </div>
         </div>
     </div>

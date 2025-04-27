@@ -1,6 +1,9 @@
 import os
 import logging
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
@@ -8,9 +11,55 @@ from sendgrid.helpers.mail import Mail, Email, To, Content
 # Configuração de logging
 logger = logging.getLogger(__name__)
 
-def send_email(to_email, subject, html_content=None, text_content=None):
+# Configurações de e-mail
+EMAIL_METHOD = os.environ.get('EMAIL_METHOD', 'smtp')  # 'smtp' ou 'sendgrid'
+SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+SMTP_USERNAME = os.environ.get('SMTP_USERNAME', '')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@3dglobalstore.com')
+
+def send_email_smtp(to_email, subject, html_content=None, text_content=None):
     """
-    Envia um e-mail usando SendGrid
+    Envia e-mail usando SMTP (local ou Gmail)
+    
+    Args:
+        to_email (str): E-mail do destinatário
+        subject (str): Assunto do e-mail
+        html_content (str, optional): Conteúdo HTML do e-mail
+        text_content (str, optional): Conteúdo em texto simples do e-mail
+        
+    Returns:
+        bool: True se o e-mail foi enviado com sucesso, False caso contrário
+    """
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = DEFAULT_FROM_EMAIL
+        msg['To'] = to_email
+
+        # Adicionar conteúdo
+        if text_content:
+            msg.attach(MIMEText(text_content, 'plain'))
+        if html_content:
+            msg.attach(MIMEText(html_content, 'html'))
+
+        # Conectar ao servidor SMTP
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+            
+        logger.info(f"E-mail enviado com sucesso para {to_email} via SMTP")
+        return True
+
+    except Exception as e:
+        logger.error(f"Erro ao enviar e-mail via SMTP: {str(e)}")
+        return False
+
+def send_email_sendgrid(to_email, subject, html_content=None, text_content=None):
+    """
+    Envia e-mail usando SendGrid
     
     Args:
         to_email (str): E-mail do destinatário
@@ -29,12 +78,9 @@ def send_email(to_email, subject, html_content=None, text_content=None):
         logger.error("SENDGRID_API_KEY não está configurada.")
         return False
         
-    # Configurar e-mail do remetente (geralmente o e-mail da empresa ou do sistema)
-    from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@3dglobalstore.com')
-    
     # Criar mensagem
     message = Mail(
-        from_email=Email(from_email),
+        from_email=Email(DEFAULT_FROM_EMAIL),
         to_emails=To(to_email),
         subject=subject
     )
@@ -55,14 +101,32 @@ def send_email(to_email, subject, html_content=None, text_content=None):
         
         # Verificar se o e-mail foi enviado com sucesso (status 2xx)
         if 200 <= response.status_code < 300:
-            logger.info(f"E-mail enviado com sucesso para {to_email}")
+            logger.info(f"E-mail enviado com sucesso para {to_email} via SendGrid")
             return True
         else:
-            logger.error(f"Erro ao enviar e-mail. Status: {response.status_code}")
+            logger.error(f"Erro ao enviar e-mail via SendGrid. Status: {response.status_code}")
             return False
     except Exception as e:
-        logger.error(f"Exceção ao enviar e-mail: {str(e)}")
+        logger.error(f"Exceção ao enviar e-mail via SendGrid: {str(e)}")
         return False
+
+def send_email(to_email, subject, html_content=None, text_content=None):
+    """
+    Função principal para envio de e-mail - escolhe o método conforme configuração
+    
+    Args:
+        to_email (str): E-mail do destinatário
+        subject (str): Assunto do e-mail
+        html_content (str, optional): Conteúdo HTML do e-mail
+        text_content (str, optional): Conteúdo em texto simples do e-mail
+        
+    Returns:
+        bool: True se o e-mail foi enviado com sucesso, False caso contrário
+    """
+    if EMAIL_METHOD.lower() == 'smtp':
+        return send_email_smtp(to_email, subject, html_content, text_content)
+    else:
+        return send_email_sendgrid(to_email, subject, html_content, text_content)
 
 def send_stock_alert(item_name, current_stock, min_stock, unit_symbol, email):
     """
@@ -100,5 +164,22 @@ def send_stock_alert(item_name, current_stock, min_stock, unit_symbol, email):
     </div>
     """
     
+    # Criar conteúdo em texto simples para clientes que não suportam HTML
+    text_content = f"""
+    ALERTA DE ESTOQUE BAIXO
+    
+    Este é um alerta automático do sistema 3D Global Store.
+    
+    Item com estoque baixo: {item_name}
+    Estoque atual: {current_stock} {unit_symbol}
+    Estoque mínimo: {min_stock} {unit_symbol}
+    Percentual: {round((current_stock/min_stock)*100, 1)}%
+    
+    É recomendado verificar o estoque e fazer um novo pedido de compra se necessário.
+    
+    Enviado em {datetime.now().strftime('%d/%m/%Y %H:%M')} por 3D Global Store.
+    Este é um e-mail automático, por favor não responda.
+    """
+    
     # Enviar e-mail
-    return send_email(email, subject, html_content=html_content)
+    return send_email(email, subject, html_content=html_content, text_content=text_content)
