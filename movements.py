@@ -12,10 +12,7 @@ from forms import MovementForm, PurchaseOrderForm, PurchaseOrderItemForm
 @app.route('/movements')
 @login_required
 def movements():
-    # Filter by movement type if requested
-    #Filtro por tipo de movimento se solicitado
     type_filter = request.args.get('type', 'all')
-    
     query = Movement.query
     
     if type_filter != 'all':
@@ -24,14 +21,11 @@ def movements():
     movements = query.order_by(Movement.created_at.desc()).all()
     movement_types = MovementType.query.all()
     
-    context = {
-        'title': 'Movimentações de Estoque',
-        'movements': movements,
-        'movement_types': movement_types,
-        'type_filter': type_filter
-    }
-    
-    return render_template('movements/movements.html', **context)
+    return render_template('movements/movements.html',
+                         title='Movimentações',
+                         movements=movements,
+                         movement_types=movement_types,
+                         type_filter=type_filter)
 
 
 @app.route('/api/items/<int:item_id>')
@@ -51,119 +45,187 @@ def get_item_details(item_id):
 def new_movement():
     form = MovementForm()
 
-    # Carregar todas as opções
-    purchase_orders = PurchaseOrder.query.all()
+    # Carregar opções para os selects
+    items = Item.query.order_by(Item.name).all()
+    movement_types = MovementType.query.all()
+    substocks = SubStock.query.all()
+    active_projects = Project.query.filter_by(status='active').all()
+    purchase_orders = PurchaseOrder.query.filter(PurchaseOrder.status != 'cancelled').all()
+
+    # Configurar choices dos campos select
+    form.item_id.choices = [(i.id, i.name) for i in items]
+    form.movement_type_id.choices = [(t.id, t.name) for t in movement_types]
+    form.source_substock_id.choices = [(0, '-')] + [(s.id, s.name) for s in substocks]
+    form.destination_substock_id.choices = [(0, '-')] + [(s.id, s.name) for s in substocks]
+    form.project_id.choices = [(0, 'Nenhum')] + [(p.id, p.name) for p in active_projects]
     form.purchase_order_id.choices = [(0, 'Nenhum')] + [(po.id, po.po_number) for po in purchase_orders]
-    form.movement_type_id.choices = [(t.id, t.name) for t in MovementType.query.all()]
-    form.source_substock_id.choices = [(0, '-')] + [(s.id, s.name) for s in SubStock.query.all()]
-    form.destination_substock_id.choices = [(0, '-')] + [(s.id, s.name) for s in SubStock.query.all()]
-    form.project_id.choices = [(0, 'Nenhum')] + [(p.id, p.name) for p in Project.query.filter_by(status='active').all()]
 
-    # Verificar se veio de um pedido de compra
-    purchase_order_id = request.args.get('purchase_order_id')
-    item_id = request.args.get('item_id')
-
-    if purchase_order_id and item_id and request.method == 'GET':
-        # Caso venha de um pedido de compra, carregar apenas o item específico
+    if request.method == 'GET':
+        # Obter parâmetros da URL
+        purchase_order_id = request.args.get('purchase_order_id')
+        item_id = request.args.get('item_id')
+        movement_type = request.args.get('movement_type', '').lower()
+        source_substock_id = request.args.get('source_substock_id')
+        destination_substock_id = request.args.get('destination_substock_id')
+        quantity = request.args.get('quantity')
+        
         try:
-            purchase_order_id = int(purchase_order_id)
-            item_id = int(item_id)
-            item = Item.query.get(item_id)
-            if item:
-                form.item_id.choices = [(item.id, item.name)]
-            else:
-                form.item_id.choices = [(0, 'Selecione um item')] + [(i.id, i.name) for i in Item.query.order_by(Item.name).all()]
-            
-            # Preencher o formulário com as informações do pedido de compra
-            po_item = PurchaseOrderItem.query.filter_by(
-                purchase_order_id=purchase_order_id,
-                item_id=item_id
-            ).first()
-            
-            if po_item:
-                # Definir o tipo de movimento como Entrada
-                entry_type = MovementType.query.filter_by(name='Entrada').first()
-                if entry_type:
-                    form.movement_type_id.data = entry_type.id
-                    form.movement_type_id.render_kw = {'readonly': True}
+            # Verificar se veio de um pedido de compra
+            if purchase_order_id and item_id:
+                purchase_order_id = int(purchase_order_id)
+                item_id = int(item_id)
                 
-                # Definir o item
-                form.item_id.data = item_id
-                form.item_id.render_kw = {'readonly': True}
+                # Buscar informações do pedido
+                po_item = PurchaseOrderItem.query.filter_by(
+                    purchase_order_id=purchase_order_id,
+                    item_id=item_id
+                ).first()
                 
-                # Definir a quantidade restante a receber
-                remaining_quantity = po_item.quantity - po_item.received_quantity
-                form.quantity.data = remaining_quantity
-                
-                # Definir o pedido de compra
-                form.purchase_order_id.data = purchase_order_id
-                form.purchase_order_id.render_kw = {'readonly': True}
-                
-                # Definir o subestoque de destino como o subestoque padrão
-                default_substock = SubStock.query.filter_by(name='Padrão').first()
-                if default_substock:
-                    form.destination_substock_id.data = default_substock.id
-            else:
-                flash('Item ou pedido de compra não encontrado.', 'danger')
-        except ValueError:
-            flash('Parâmetros inválidos.', 'danger')
-    else:
-        # Caso seja uma movimentação normal, carregar todos os itens
-        form.item_id.choices = [(0, 'Selecione um item')] + [(i.id, i.name) for i in Item.query.order_by(Item.name).all()]
-        form.item_id.data = 0  # Definir como vazio por padrão
-        # Limpar atributos readonly
-        form.movement_type_id.render_kw = None
-        form.item_id.render_kw = None
-        form.purchase_order_id.render_kw = None
-        form.destination_substock_id.render_kw = None
+                if po_item:
+                    # Configurar formulário para recebimento
+                    entry_type = MovementType.query.filter_by(name='Entrada').first()
+                    if entry_type:
+                        form.movement_type_id.data = entry_type.id
+                        form.movement_type_id.render_kw = {'readonly': True}
+                    
+                    form.item_id.data = item_id
+                    form.item_id.render_kw = {'readonly': True}
+                    
+                    form.quantity.data = po_item.quantity - po_item.received_quantity
+                    form.purchase_order_id.data = purchase_order_id
+                    
+                    # Definir subestoque padrão para entrada
+                    default_substock = SubStock.query.filter_by(name='Padrão').first()
+                    if default_substock:
+                        form.destination_substock_id.data = default_substock.id
+                else:
+                    flash('Item do pedido de compra não encontrado.', 'danger')
+                    
+            # Verificar se veio da lista de itens
+            elif item_id:
+                item_id = int(item_id)
+                item = Item.query.get(item_id)
+                if item:
+                    # Configurar formulário com o item selecionado
+                    form.item_id.data = item_id
+                    
+                    # Processar quantidade se fornecida
+                    if quantity:
+                        try:
+                            form.quantity.data = float(quantity)
+                        except ValueError:
+                            flash('Quantidade inválida.', 'warning')
+                    
+                    # Determinar o tipo de movimento baseado no parâmetro
+                    if movement_type == 'saida':
+                        move_type = MovementType.query.filter_by(name='Saída').first()
+                        if move_type:
+                            form.movement_type_id.data = move_type.id
+                            # Configurar origem se fornecida, senão usar padrão
+                            if source_substock_id:
+                                try:
+                                    form.source_substock_id.data = int(source_substock_id)
+                                except ValueError:
+                                    flash('Subestoque de origem inválido.', 'warning')
+                                    default_substock = SubStock.query.filter_by(name='Padrão').first()
+                                    if default_substock:
+                                        form.source_substock_id.data = default_substock.id
+                            else:
+                                default_substock = SubStock.query.filter_by(name='Padrão').first()
+                                if default_substock:
+                                    form.source_substock_id.data = default_substock.id
+                            form.destination_substock_id.data = 0
+                    elif movement_type == 'entrada':
+                        entry_type = MovementType.query.filter_by(name='Entrada').first()
+                        if entry_type:
+                            form.movement_type_id.data = entry_type.id
+                            # Configurar destino se fornecido, senão usar padrão
+                            if destination_substock_id:
+                                try:
+                                    form.destination_substock_id.data = int(destination_substock_id)
+                                except ValueError:
+                                    flash('Subestoque de destino inválido.', 'warning')
+                                    default_substock = SubStock.query.filter_by(name='Padrão').first()
+                                    if default_substock:
+                                        form.destination_substock_id.data = default_substock.id
+                            else:
+                                default_substock = SubStock.query.filter_by(name='Padrão').first()
+                                if default_substock:
+                                    form.destination_substock_id.data = default_substock.id
+                            form.source_substock_id.data = 0
+                    elif movement_type == 'transferencia':
+                        transfer_type = MovementType.query.filter_by(name='Transferência').first()
+                        if transfer_type:
+                            form.movement_type_id.data = transfer_type.id
+                            # Configurar origem e destino
+                            if source_substock_id:
+                                try:
+                                    form.source_substock_id.data = int(source_substock_id)
+                                except ValueError:
+                                    flash('Subestoque de origem inválido.', 'warning')
+                            if destination_substock_id:
+                                try:
+                                    form.destination_substock_id.data = int(destination_substock_id)
+                                except ValueError:
+                                    flash('Subestoque de destino inválido.', 'warning')
+                    else:
+                        # Definir tipo de movimento padrão como Entrada (comportamento padrão)
+                        entry_type = MovementType.query.filter_by(name='Entrada').first()
+                        if entry_type:
+                            form.movement_type_id.data = entry_type.id
+                        # Definir subestoque padrão para destino
+                        default_substock = SubStock.query.filter_by(name='Padrão').first()
+                        if default_substock:
+                            form.destination_substock_id.data = default_substock.id
+                    
+                    # Opcionalmente bloquear alteração do tipo se especificado
+                    if movement_type:
+                        form.movement_type_id.render_kw = {'readonly': True}
+                else:
+                    flash('Item não encontrado.', 'danger')
+        except ValueError as e:
+            flash(f'Erro ao processar parâmetros: {str(e)}', 'danger')
 
     if form.validate_on_submit():
-        # Verificar se o movimento já existe baseado nos dados fornecidos
-        existing_movement = Movement.query.filter(
-            Movement.item_id == form.item_id.data,
-            Movement.quantity == form.quantity.data,
-            Movement.created_at >= datetime.utcnow() - timedelta(seconds=15)
-        ).first()
-
-        if existing_movement:
-            flash('Esta movimentação já foi registrada.', 'warning')
-            return redirect(url_for('movements'))
-
         try:
-            # Validate quantity
+            # Validar item selecionado
+            if not form.item_id.data:
+                flash('Selecione um item.', 'danger')
+                return render_template('movements/movement_form.html', form=form)
+
             # Validar quantidade
             if form.quantity.data <= 0:
-                flash('A quantidade deve ser maior que zero', 'danger')
-                return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
+                flash('A quantidade deve ser maior que zero.', 'danger')
+                return render_template('movements/movement_form.html', form=form)
 
-            # Get the movement type to determine how to handle stock
-            # Obtenha o tipo de movimento para determinar como lidar com o estoque
+            # Obter tipo de movimento
             movement_type = MovementType.query.get(form.movement_type_id.data)
+            if not movement_type:
+                flash('Tipo de movimento inválido.', 'danger')
+                return render_template('movements/movement_form.html', form=form)
 
-            # Validate substocks based on movement type
-            # Validar subestoques com base no tipo de movimento
-            # if 'entrada' in movement_type.name.lower() and form.source_substock_id.data == 0:
-            #     flash('Movimentações de entrada não devem ter origem', 'danger')
-            #     return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
-            if 'entrada' in movement_type.name.lower() and form.destination_substock_id.data == 0:
-                # console.log('form.destination_substock_id.data', form.destination_substock_id.data)
-                flash('Movimentações de entrada devem ter destino', 'danger')
-                return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
+            # Validar origem/destino conforme tipo de movimento
+            if 'entrada' in movement_type.name.lower():
+                if form.destination_substock_id.data == 0:
+                    flash('Movimentações de entrada devem ter destino.', 'danger')
+                    return render_template('movements/movement_form.html', form=form)
+                form.source_substock_id.data = 0
 
+            elif 'saída' in movement_type.name.lower():
+                if form.source_substock_id.data == 0:
+                    flash('Movimentações de saída devem ter origem.', 'danger')
+                    return render_template('movements/movement_form.html', form=form)
+                form.destination_substock_id.data = 0
 
-            if 'saída' in movement_type.name.lower() and form.destination_substock_id.data != 0:
-                flash('Movimentações de saída não devem ter destino', 'danger')
-                return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
-
-            if 'transferência' in movement_type.name.lower():
+            elif 'transferência' in movement_type.name.lower():
                 if form.source_substock_id.data == 0 or form.destination_substock_id.data == 0:
-                    flash('Transferências requerem origem e destino', 'danger')
-                    return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
+                    flash('Transferências requerem origem e destino.', 'danger')
+                    return render_template('movements/movement_form.html', form=form)
                 if form.source_substock_id.data == form.destination_substock_id.data:
-                    flash('Origem e destino devem ser diferentes', 'danger')
-                    return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
+                    flash('Origem e destino devem ser diferentes.', 'danger')
+                    return render_template('movements/movement_form.html', form=form)
 
-            # Create the movement record
+            # Criar movimento
             movement = Movement(
                 item_id=form.item_id.data,
                 quantity=form.quantity.data,
@@ -173,22 +235,19 @@ def new_movement():
                 created_by_id=current_user.id
             )
 
-            # Handle source and destination substocks
+            # Definir origem/destino se aplicável
             if form.source_substock_id.data != 0:
                 movement.source_substock_id = form.source_substock_id.data
-
             if form.destination_substock_id.data != 0:
                 movement.destination_substock_id = form.destination_substock_id.data
 
-            # Handle project association
+            # Associar ao projeto se selecionado
             if form.project_id.data != 0:
                 movement.project_id = form.project_id.data
 
-            # Handle purchase order association
+            # Associar ao pedido de compra se selecionado
             if form.purchase_order_id.data != 0:
                 movement.purchase_order_id = form.purchase_order_id.data
-                
-                # Update the received quantity in the purchase order
                 po_item = PurchaseOrderItem.query.filter_by(
                     purchase_order_id=form.purchase_order_id.data,
                     item_id=form.item_id.data
@@ -196,131 +255,106 @@ def new_movement():
                 
                 if po_item:
                     po_item.received_quantity += form.quantity.data
-                    
-                    # Check if all items are received
-                    purchase_order = PurchaseOrder.query.get(form.purchase_order_id.data)
-                    all_received = True
-                    
-                    for item in purchase_order.items:
-                        if item.received_quantity < item.quantity:
-                            all_received = False
-                            break
-                    
-                    if all_received:
-                        flash('entrou em receiv', 'danger')
-                        purchase_order.status = 'received'
-                        purchase_order.received_at = datetime.utcnow()
-                        db.session.add(purchase_order)
+                    db.session.add(po_item)
 
-            # Update inventory based on movement type
+            # Atualizar estoque
             if movement_type.affects_stock:
-                # For entries, increase stock in destination
-                if movement.destination_substock_id and not movement.source_substock_id:
-                    inv_item = InventoryItem.query.filter_by(
-                        item_id=movement.item_id,
-                        substock_id=movement.destination_substock_id
-                    ).first()
+                if not update_inventory(movement):
+                    return render_template('movements/movement_form.html', form=form)
 
-                    if inv_item:
-                        inv_item.quantity += movement.quantity
-                    else:
-                        inv_item = InventoryItem(
-                            item_id=movement.item_id,
-                            substock_id=movement.destination_substock_id,
-                            quantity=movement.quantity
-                        )
-                        db.session.add(inv_item)
-
-                # For exits, decrease stock in source
-                elif movement.source_substock_id and not movement.destination_substock_id:
-                    inv_item = InventoryItem.query.filter_by(
-                        item_id=movement.item_id,
-                        substock_id=movement.source_substock_id
-                    ).first()
-
-                    if inv_item:
-                        if inv_item.quantity >= movement.quantity:
-                            inv_item.quantity -= movement.quantity
-                        else:
-                            flash('Quantidade insuficiente no estoque de origem', 'danger')
-                            return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
-                    else:
-                        flash('Item não encontrado no estoque de origem', 'danger')
-                        return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
-
-                # For transfers, decrease in source and increase in destination
-                elif movement.source_substock_id and movement.destination_substock_id:
-                    # Check source inventory
-                    source_inv = InventoryItem.query.filter_by(
-                        item_id=movement.item_id,
-                        substock_id=movement.source_substock_id
-                    ).first()
-
-                    if not source_inv or source_inv.quantity < movement.quantity:
-                        flash('Quantidade insuficiente no estoque de origem', 'danger')
-                        return render_template('movements/movement_form.html', form=form, title='Nova Movimentação')
-
-                    # Update source inventory
-                    source_inv.quantity -= movement.quantity
-
-                    # Update destination inventory
-                    dest_inv = InventoryItem.query.filter_by(
-                        item_id=movement.item_id,
-                        substock_id=movement.destination_substock_id
-                    ).first()
-
-                    if dest_inv:
-                        dest_inv.quantity += movement.quantity
-                    else:
-                        dest_inv = InventoryItem(
-                            item_id=movement.item_id,
-                            substock_id=movement.destination_substock_id,
-                            quantity=movement.quantity
-                        )
-                        db.session.add(dest_inv)
-
-            # Save the movement and all related changes
+            # Salvar movimento
             db.session.add(movement)
             db.session.commit()
 
-             # Se veio de um pedido de compra, atualizar o status
-            if form.purchase_order_id.data:
-                purchase_order = PurchaseOrder.query.get(form.purchase_order_id.data)
-                if purchase_order:
-                    po_item = PurchaseOrderItem.query.filter_by(
-                        purchase_order_id=purchase_order.id,
-                        item_id=form.item_id.data
-                    ).first()
-                    if po_item:
-                        # Atualizar a quantidade recebida do item
-                        po_item.received_quantity += form.quantity.data
-                        db.session.add(po_item)
-                        flash('chgou em push2', 'danger')
-                        # Atualizar o status do pedido
-                        update_purchase_order_status(purchase_order.id)
-            
-            db.session.commit()
-            
-            # Exibir uma mensagem de sucesso e permanecer na mesma página.
-            flash('Movimentação criada com sucesso.', 'success')
-            return render_template('movements/movement_form.html', form=form)
-                    
+            flash('Movimentação registrada com sucesso!', 'success')
+            if form.purchase_order_id.data != 0:
+                return redirect(url_for('purchase_orders'))
+            return redirect(url_for('movements'))
+
         except Exception as e:
             db.session.rollback()
-            flash(f'Erro ao criar movimentação: {str(e)}', 'danger')
+            flash(f'Erro ao registrar movimentação: {str(e)}', 'danger')
             return render_template('movements/movement_form.html', form=form)
-    else:
-        flash('chegou ao final', 'danger')
-        return render_template('movements/movement_form.html', form=form)
+
+    return render_template('movements/movement_form.html', 
+                         form=form,
+                         title='Nova Movimentação')
+
+def update_inventory(movement):
+    """Atualiza o estoque baseado no movimento"""
+    try:
+        # Entrada: aumentar estoque no destino
+        if movement.destination_substock_id and not movement.source_substock_id:
+            inv_item = InventoryItem.query.filter_by(
+                item_id=movement.item_id,
+                substock_id=movement.destination_substock_id
+            ).first()
+            
+            if inv_item:
+                inv_item.quantity += movement.quantity
+            else:
+                inv_item = InventoryItem(
+                    item_id=movement.item_id,
+                    substock_id=movement.destination_substock_id,
+                    quantity=movement.quantity
+                )
+                db.session.add(inv_item)
+
+        # Saída: diminuir estoque na origem
+        elif movement.source_substock_id and not movement.destination_substock_id:
+            inv_item = InventoryItem.query.filter_by(
+                item_id=movement.item_id,
+                substock_id=movement.source_substock_id
+            ).first()
+            
+            if not inv_item or inv_item.quantity < movement.quantity:
+                flash('Quantidade insuficiente no estoque de origem.', 'danger')
+                return False
+                
+            inv_item.quantity -= movement.quantity
+
+        # Transferência: diminuir na origem e aumentar no destino
+        elif movement.source_substock_id and movement.destination_substock_id:
+            source_inv = InventoryItem.query.filter_by(
+                item_id=movement.item_id,
+                substock_id=movement.source_substock_id
+            ).first()
+            
+            if not source_inv or source_inv.quantity < movement.quantity:
+                flash('Quantidade insuficiente no estoque de origem.', 'danger')
+                return False
+                
+            source_inv.quantity -= movement.quantity
+            
+            dest_inv = InventoryItem.query.filter_by(
+                item_id=movement.item_id,
+                substock_id=movement.destination_substock_id
+            ).first()
+            
+            if dest_inv:
+                dest_inv.quantity += movement.quantity
+            else:
+                dest_inv = InventoryItem(
+                    item_id=movement.item_id,
+                    substock_id=movement.destination_substock_id,
+                    quantity=movement.quantity
+                )
+                db.session.add(dest_inv)
+
+        return True
+
+    except Exception as e:
+        flash(f'Erro ao atualizar estoque: {str(e)}', 'danger')
+        return False
+
 @app.route('/movements/<int:movement_id>')
 @login_required
 def movement_detail(movement_id):
     movement = Movement.query.get_or_404(movement_id)
+    return render_template('movements/movement_detail.html',
+                         title=f'Movimentação #{movement.id}',
+                         movement=movement)
     
-    context = {
-        'title': f'Movimentação #{movement.id}',
-        'movement': movement
-    }
     
     return render_template('movements/movement_detail.html', **context)
 

@@ -99,12 +99,17 @@ class MovementForm(FlaskForm):
     movement_type_id = SelectField('Tipo de Movimentação', validators=[DataRequired()], coerce=int)
     item_name = StringField('Nome do Item', validators=[Optional()])
     quantity = FloatField('Quantidade', validators=[DataRequired(), NumberRange(min=0.01)])
-    source_substock_id = SelectField('Origem', coerce=int)
-    destination_substock_id = SelectField('Destino', coerce=int)
-    project_id = SelectField('Projeto', coerce=int)
-    purchase_order_id = SelectField('Pedido de Compra', coerce=int)
+    
+    # Make these fields optional with coerce=int and default=0
+    source_substock_id = SelectField('Origem', coerce=int, default=0)
+    destination_substock_id = SelectField('Destino', coerce=int, default=0)
+    project_id = SelectField('Projeto', coerce=int, default=0)
+    purchase_order_id = SelectField('Pedido de Compra', coerce=int, default=0)
+    
+    # Optional fields with explicit validators
     reference_code = StringField('Código de Referência', validators=[Optional(), Length(max=50)])
-    notes = TextAreaField('Observações')
+    notes = TextAreaField('Observações', validators=[Optional()])
+    
     submit = SubmitField('Registrar Movimentação')
 
 class PurchaseOrderForm(FlaskForm):

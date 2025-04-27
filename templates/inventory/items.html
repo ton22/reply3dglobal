@@ -69,14 +69,14 @@
                         <th>Estoque Mínimo</th>
                         <th>Estoque Atual</th>
                         <th>Status</th>
-                        <th>Ações</th>
+                        <th class="text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in items %}
                     {% set total_stock = item.get_total_stock() %}
                     {% set is_below_threshold = item.is_below_alert_threshold() %}
-                    <tr class="item-row" onclick="window.location='{{ url_for('item_detail', item_id=item.id) }}'">
+                    <tr class="item-row">
                         <td>{{ item.item_type.name }}</td>
                         <td>{{ item.name }}</td>
                         <td>{{ item.brand.name if item.brand else '-' }}</td>
@@ -99,6 +99,28 @@
                             {% else %}
                             <span class="badge bg-success">OK</span>
                             {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <a href="{{ url_for('new_movement', item_id=item.id, movement_type='entrada') }}" 
+                                   class="btn btn-success btn-sm" 
+                                   title="Adicionar Estoque"
+                                   onclick="event.stopPropagation();">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                                <a href="{{ url_for('new_movement', item_id=item.id, movement_type='saida') }}" 
+                                   class="btn btn-danger btn-sm" 
+                                   title="Debitar Estoque"
+                                   onclick="event.stopPropagation();">
+                                    <i class="fas fa-minus"></i>
+                                </a>
+                                <a href="{{ url_for('item_detail', item_id=item.id) }}" 
+                                   class="btn btn-primary btn-sm" 
+                                   title="Ver Detalhes"
+                                   onclick="event.stopPropagation();">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

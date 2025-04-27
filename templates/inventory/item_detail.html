@@ -7,9 +7,16 @@
     <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-primary me-2">
         <i class="fas fa-edit me-1"></i>Editar
     </a>
-    <a href="{{ url_for('new_movement') }}?item_id={{ item.id }}" class="btn btn-success">
-        <i class="fas fa-exchange-alt me-1"></i>Movimentar
-    </a>
+    <div class="btn-group">
+        <a href="{{ url_for('new_movement', item_id=item.id, movement_type='entrada') }}" 
+           class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>Adicionar
+        </a>
+        <a href="{{ url_for('new_movement', item_id=item.id, movement_type='saida') }}" 
+           class="btn btn-danger">
+            <i class="fas fa-minus me-1"></i>Retirar
+        </a>
+    </div>
 </div>
 {% endblock %}
 
@@ -102,12 +109,14 @@
                                 <td>{{ stock.substock.location or '-' }}</td>
                                 <td>{{ stock.quantity }} {{ item.unit.symbol }}</td>
                                 <td>
-                                    <a href="{{ url_for('new_movement') }}?item_id={{ item.id }}&source_substock_id={{ stock.substock.id }}" 
-                                       class="btn btn-sm btn-primary me-1" title="Retirar do estoque">
+                                    <a href="{{ url_for('new_movement', item_id=item.id, movement_type='saida', source_substock_id=stock.substock.id) }}" 
+                                       class="btn btn-sm btn-danger me-1" 
+                                       title="Retirar do estoque">
                                         <i class="fas fa-minus"></i>
                                     </a>
-                                    <a href="{{ url_for('new_movement') }}?item_id={{ item.id }}&destination_substock_id={{ stock.substock.id }}" 
-                                       class="btn btn-sm btn-success" title="Adicionar ao estoque">
+                                    <a href="{{ url_for('new_movement', item_id=item.id, movement_type='entrada', destination_substock_id=stock.substock.id) }}" 
+                                       class="btn btn-sm btn-success" 
+                                       title="Adicionar ao estoque">
                                         <i class="fas fa-plus"></i>
                                     </a>
                                 </td>
