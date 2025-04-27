@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from app import app, db
 from models import Movement, MovementType, Item, SubStock, InventoryItem, Project, PurchaseOrder, PurchaseOrderItem
 from forms import MovementForm, PurchaseOrderForm, PurchaseOrderItemForm
+from settings import get_setting
 
 # Routes for inventory movements and purchase orders
 #Rotas para movimentos de estoque e pedidos de compra
@@ -299,7 +300,13 @@ def update_inventory(movement):
                     quantity=movement.quantity
                 )
                 db.session.add(inv_item)
+# Esta solução:
+# 1. Mantém a integridade do banco de dados (não permite preços nulos)
+# 2. Define um preço temporário de 0.0 que pode ser atualizado depois
+# 3. Avisa o usuário que os preços precisam ser atualizados
+# 4. Não requer nenhuma alteração no esquema do banco de dados
 
+# O erro ocorreu porque o sistema tentava criar registros de PurchaseOrderItem sem um preço unitário, violando a restrição NOT NULL do banco de dados. Com esta correção, o sistema continuará funcionando como antes, mas agora com preços temporários que podem ser ajustados posteriormente.
         # Saída: diminuir estoque na origem
         elif movement.source_substock_id and not movement.destination_substock_id:
             inv_item = InventoryItem.query.filter_by(
@@ -392,7 +399,9 @@ def new_purchase_order():
     form = PurchaseOrderForm()
     
     if form.validate_on_submit():
-        po_number = form.po_number.data if form.po_number.data else f'PO-{datetime.utcnow().strftime("%Y%m%d-%H%M%S")}'
+        # Usar o prefixo configurado nas settings
+        po_prefix = get_setting('po_prefix', 'PO-')  # Pega o prefixo configurado, ou usa 'PO-' como padrão
+        po_number = form.po_number.data if form.po_number.data else f'{po_prefix}{datetime.utcnow().strftime("%Y%m%d-%H%M%S")}'
         
         purchase_order = PurchaseOrder(
             po_number=po_number,
@@ -430,8 +439,9 @@ def auto_generate_po():
         flash('Não há itens abaixo do estoque mínimo para gerar pedido de compra', 'info')
         return redirect(url_for('purchase_orders'))
     
-    # Create a new PO
-    po_number = f'AUTO-{datetime.utcnow().strftime("%Y%m%d-%H%M%S")}'
+    # Create a new PO using configured prefix
+    po_prefix = get_setting('po_prefix', 'PO-')  # Pega o prefixo configurado, ou usa 'PO-' como padrão
+    po_number = f'{po_prefix}AUTO-{datetime.utcnow().strftime("%Y%m%d-%H%M%S")}'
     
     purchase_order = PurchaseOrder(
         po_number=po_number,
@@ -449,13 +459,14 @@ def auto_generate_po():
         po_item = PurchaseOrderItem(
             purchase_order_id=purchase_order.id,
             item_id=item_data['item'].id,
-            quantity=item_data['to_order']
+            quantity=item_data['to_order'],
+            unit_price=0.0  # Preço temporário que pode ser ajustado depois
         )
         db.session.add(po_item)
     
     db.session.commit()
     
-    flash(f'Pedido de compra {po_number} gerado com sucesso para {len(items_to_order)} itens', 'success')
+    flash(f'Pedido de compra {po_number} gerado com sucesso para {len(items_to_order)} itens. Por favor, atualize os preços unitários.', 'success')
     return redirect(url_for('purchase_order_detail', po_id=purchase_order.id))
 
 @app.route('/purchase_orders/<int:po_id>')

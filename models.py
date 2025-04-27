@@ -282,7 +282,7 @@ class PurchaseOrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Float, nullable=False)  # Quantidade do item
     received_quantity = db.Column(db.Float, default=0)  # Quantidade recebida
-    unit_price = db.Column(db.Float, nullable=False)  # Preço unitário do item
+    unit_price = db.Column(db.Float, nullable=True)  # Preço unitário do item (pode ser definido depois)
 
     # Chaves estrangeiras
     purchase_order_id = db.Column(db.Integer, db.ForeignKey('purchase_order.id'), nullable=False)
