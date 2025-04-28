@@ -8,6 +8,7 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager, current_user
 
+
 # Configuração do ambiente
 ENV = os.environ.get('FLASK_ENV', 'development')
 DEBUG = ENV == 'development'
