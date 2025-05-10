@@ -10,6 +10,18 @@
 </div>
 {% endblock %}
 
+{% block extra_head %}
+<style>
+    .color-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Movement Type Filter -->
 <div class="card mb-4">
@@ -41,6 +53,8 @@
                         <th>ID</th>
                         <th>Data</th>
                         <th>Item</th>
+                        <th>SKU</th>
+                        <th>Cor</th>
                         <th>Tipo</th>
                         <th>Quantidade</th>
                         <th>Origem</th>
@@ -55,6 +69,17 @@
                         <td>{{ movement.id }}</td>
                         <td>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td><a href="{{ url_for('item_detail', item_id=movement.item.id) }}">{{ movement.item.name }}</a></td>
+                        <td>{{ movement.item.sku or '-' }}</td>
+                        <td>
+                            {% if movement.item.color %}
+                            <span class="d-flex align-items-center">
+                                <span class="color-dot me-2" style="background-color: {{ movement.item.color }};"></span>
+                                {{ movement.item.color_name }}
+                            </span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="
                                 {% if 'entrada' in movement.movement_type.name.lower() %}movement-entry

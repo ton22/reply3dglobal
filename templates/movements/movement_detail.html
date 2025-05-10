@@ -54,6 +54,23 @@
                     </div>
                 </div>
                 <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">SKU:</div>
+                    <div class="col-md-8">{{ movement.item.sku or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4 fw-bold">Cor:</div>
+                    <div class="col-md-8">
+                        {% if movement.item.color %}
+                        <span class="d-flex align-items-center">
+                            <span class="color-dot me-2" style="background-color: {{ movement.item.color }};"></span>
+                            {{ movement.item.color }}
+                        </span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-2">
                     <div class="col-md-4 fw-bold">Quantidade:</div>
                     <div class="col-md-8">{{ movement.quantity }} {{ movement.item.unit.symbol }}</div>
                 </div>
