@@ -45,18 +45,21 @@ Para suporte, por favor, abra uma issue em nosso repositório GitHub ou entre em
 ## Recursos Adicionais
 
 ### Tutoriais em Vídeo
+
 - Configuração inicial do sistema
 - Gerenciamento básico de estoque
 - Criação e gestão de projetos
 - Geração de relatórios
 
 ### Melhores Práticas
+
 - Organização de subestoques
 - Nomenclatura de itens
 - Controle de movimentações
 - Gestão de pedidos de compra
 
 ### Requisitos do Sistema
+
 - Python 3.8 ou superior
 - SQLite 3
 - Navegador web moderno

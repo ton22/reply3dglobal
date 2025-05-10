@@ -1,12 +1,14 @@
 # Guia de Otimização de Performance
 
 ## 1. Otimização do Banco de Dados
+
 - Adicione índices apropriados nas tabelas
 - Use lazy loading quando apropriado
 - Implemente caching para consultas frequentes
 - Otimize as queries SQL
 
 ## 2. Otimização do Flask
+
 ```python
 # Em app.py ou main.py
 from flask import Flask
@@ -29,6 +31,7 @@ def get_dados():
 ```
 
 ## 3. Otimização Frontend
+
 - Minifique arquivos CSS e JavaScript
 - Use compressão gzip
 - Implemente lazy loading para imagens
@@ -44,6 +47,7 @@ def get_dados():
 ```
 
 ## 4. Configuração do Servidor
+
 ```python
 # Em settings.py
 SEND_FILE_MAX_AGE_DEFAULT = 31536000  # Cache de arquivos estáticos por 1 ano
@@ -51,12 +55,14 @@ TEMPLATES_AUTO_RELOAD = False  # Em produção
 ```
 
 ## 5. Recomendações Adicionais
+
 1. Use um CDN para arquivos estáticos
 2. Implemente compressão de resposta
 3. Otimize o tamanho das imagens
 4. Configure corretamente o caching do navegador
 
 ## 6. Monitoramento
+
 - Implemente logging de performance
 - Use ferramentas como Flask-DebugToolbar em desenvolvimento
 - Monitore tempos de resposta das páginas
@@ -80,6 +86,7 @@ def add_header(response):
 ```
 
 ## 8. Checklist de Otimização
+
 - [ ] Implementar caching
 - [ ] Otimizar queries do banco de dados
 - [ ] Minificar recursos estáticos

@@ -55,6 +55,7 @@ Para criar um novo subestoque:
 ### Gerenciando Subestoques
 
 Cada subestoque pode ser gerenciado independentemente, permitindo:
+
 - Visualização do inventário atual
 - Rastreamento de movimentações
 - Monitoramento de níveis de estoque
@@ -62,6 +63,7 @@ Cada subestoque pode ser gerenciado independentemente, permitindo:
 ### Transferências entre Subestoques
 
 Para transferir itens entre subestoques:
+
 1. Acesse a seção de Movimentações
 2. Selecione "Nova Transferência"
 3. Escolha:
@@ -77,6 +79,7 @@ Para transferir itens entre subestoques:
 ### Realização de Inventário Físico
 
 Para realizar um inventário físico:
+
 1. Gere um relatório de estoque atual
 2. Realize a contagem física
 3. Registre as diferenças encontradas
@@ -85,6 +88,7 @@ Para realizar um inventário físico:
 ### Ajustes de Estoque
 
 Para corrigir discrepâncias no estoque:
+
 1. Acesse a página do item
 2. Utilize a função de ajuste de estoque
 3. Registre o motivo do ajuste
